@@ -6,7 +6,6 @@ use mako\view\renderers\RendererInterface;
 
 class BrioRenderer implements RendererInterface
 {
-
     /**
      * Brio instance.
      *

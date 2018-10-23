@@ -262,18 +262,11 @@ class Brio
      *  Get RuntimeCompiler instance
      *  The instance is already set up properly and resetted
      *
-     *  @param bool  $checkdir
-     *
      *  @return placer\brio\engine\compiler\RuntimeCompiler
      */
-    protected static function getCompiler($checkdir = true)
+    protected static function getCompiler()
     {
-        if ($checkdir)
-        {
-            static::checkCacheDirectory();
-        }
-
-        $reuntimeCompiler = new RuntimeCompiler;
+        $runtimeCompiler = new RuntimeCompiler;
 
         if (! empty(static::$compilerOptions))
         {
@@ -283,9 +276,9 @@ class Brio
             }
         }
 
-        $reuntimeCompiler->reset();
+        $runtimeCompiler->reset();
 
-        return $reuntimeCompiler;
+        return $runtimeCompiler;
     }
 
 }
