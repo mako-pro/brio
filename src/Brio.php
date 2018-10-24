@@ -9,6 +9,13 @@ use placer\brio\engine\Compiler;
 class Brio
 {
     /**
+     * File extension
+     *
+     * @var string
+     */
+    const EXT = '.html.twig';
+
+    /**
      * Path to the views diretory
      *
      * @var string
@@ -21,13 +28,6 @@ class Brio
      * @var string
      */
     protected static $caheDir;
-
-    /**
-     * File extension
-     *
-     * @var string
-     */
-    protected static $fileExtension = '.html.twig';
 
     /**
      * Compiler options
@@ -208,9 +208,7 @@ class Brio
             $viewDir = str_replace('app', $subPath, $viewDir);
         }
 
-        $file = str_replace('.', DIRECTORY_SEPARATOR, $file);
-
-        $file .= static::$fileExtension;
+        $file = str_replace('.', DIRECTORY_SEPARATOR, $file) . static::EXT;
 
         $filePath = $viewDir . DIRECTORY_SEPARATOR . $file;
 
