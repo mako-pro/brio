@@ -71,19 +71,16 @@ class Brio
      */
     public static function load(string $view, array $vars = [], $return = false, $blocks = [])
     {
-        if (! is_file($view))
-        {
-            if (! $view = static::getTemplatePath($view))
-            {
-                throw new BrioException(vsprintf('View file [ %s ] does not exist!', [$view]));
-            }
-        }
-
         $caheDir = static::$caheDir;
 
         if (empty($caheDir))
         {
-            throw new BrioException(vsprintf('Cache dir [ %s ] is missing!', ['defined (?) in config']));
+            throw new BrioException('Cache view directory isn`t defined [ "brio::config.caheDir" ]');
+        }
+
+        if (! is_file($view))
+        {
+            $view = static::getTemplatePath($view);
         }
 
         $pathHash = sha1($view);
@@ -104,7 +101,7 @@ class Brio
 
         if (! is_dir(dirname($cacheFile)))
         {
-            static::checkCacheDirectory();
+            static::createCacheDirectory();
         }
 
         $file = fopen($cacheFile, "a+");
@@ -195,16 +192,11 @@ class Brio
      */
     public static function getTemplatePath($file)
     {
-        if (strpos($file, static::$fileExtension) !== false)
-        {
-            return $file;
-        }
-
         $viewDir = static::$viewDir;
 
         if (empty($viewDir))
         {
-            throw new BrioException(vsprintf('View directory [ %s ] is missing!', ['defined (?) in config']));
+            throw new BrioException('Views directory isn`t defined [ "brio::config.viewDir" ]');
         }
 
         if (strpos($file, '::') !== false)
@@ -237,7 +229,7 @@ class Brio
      *
      *  @return void
      */
-    protected static function checkCacheDirectory()
+    protected static function createCacheDirectory()
     {
         $directory = static::$caheDir;
 
@@ -245,16 +237,16 @@ class Brio
         {
             $old = umask(0);
 
-            if (! mkdir($directory, 0777, true))
+            if (! @mkdir($directory, 0777, true))
             {
-                throw new BrioException(vsprintf('Directory [ %s ] is not a valid directory!', [$directory]));
+                throw new BrioException(vsprintf('Failed to create cache directory [ %s ]', [$directory]));
             }
             umask($old);
         }
 
         if (! is_writable($directory))
         {
-            throw new BrioException(vsprintf('Directory [ %s ] not writable!', [$directory]));
+            throw new BrioException(vsprintf('Cache directory [ %s ] not writable!', [$directory]));
         }
     }
 
