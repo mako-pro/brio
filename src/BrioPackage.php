@@ -25,10 +25,10 @@ class BrioPackage extends Package
      */
     protected function bootstrap()
     {
-        $config = $this->container->get('config')->get('brio::config');
-
-        $this->container->get('view')->extend($config['fileExtension'], function() use ($config)
+        $this->container->get('view')->extend('.html.twig', function()
         {
+            $config = $this->container->get('config')->get('brio::config');
+
 			$brio = new Brio($config);
 
             return new BrioRenderer($brio);

@@ -27,7 +27,7 @@ class Brio
      *
      * @var string
      */
-    protected static $fileExtension = '.tpl';
+    protected static $fileExtension = '.html.twig';
 
     /**
      * Compiler options
