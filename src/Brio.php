@@ -131,19 +131,7 @@ class Brio
             $compiler->setDebug($cacheFile . '.dump');
         }
 
-        try
-        {
-            $code = $compiler->compileFile($view, false, $vars);
-        }
-        catch (Exception $e)
-        {
-            if (isset($file))
-            {
-                touch($cacheFile, 300, 300);
-                chmod($cacheFile, 0777);
-            }
-            throw $e->getMessage();
-        }
+        $code = $compiler->compileFile($view, false, $vars);
 
         if (isset($file))
         {
@@ -256,8 +244,6 @@ class Brio
      */
     protected static function getCompiler()
     {
-        $runtimeCompiler = new RuntimeCompiler;
-
         if (! empty(static::$compilerOptions))
         {
             foreach (static::$compilerOptions as $key => $val)
@@ -266,9 +252,11 @@ class Brio
             }
         }
 
-        $runtimeCompiler->reset();
+        $compiler = new RuntimeCompiler;
 
-        return $runtimeCompiler;
+        $compiler->reset();
+
+        return $compiler;
     }
 
 }

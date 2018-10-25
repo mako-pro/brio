@@ -2,9 +2,9 @@
 
 namespace placer\brio\engine;
 
-use RuntimeException;
+use Exception;
 
-class BrioException extends RuntimeException
+class BrioException extends Exception
 {
 
 }
