@@ -109,16 +109,6 @@ class Brio
         if (! flock($file, LOCK_EX | LOCK_NB))
         {
             fclose($file);
-
-            if (is_file($cacheFile))
-            {
-                require $cacheFile;
-
-                if (is_callable($callback))
-                {
-                    return $callback($vars, $return, $blocks);
-                }
-            }
             unset($file);
         }
 
@@ -131,18 +121,18 @@ class Brio
             $compiler->setDebug($cacheFile . '.dump');
         }
 
-        $code = $compiler->compileFile($view, false, $vars);
+        $fileString = $compiler->compileFile($view, false, $vars);
 
         if (isset($file))
         {
             ftruncate($file, 0);
-            fwrite($file, '<?php' . $code);
+            fwrite($file, '<?php' . $fileString);
             flock($file, LOCK_UN);
             fclose($file);
         }
         else
         {
-            eval($code);
+            eval($fileString);
         }
 
         if (! is_callable($callback))
@@ -151,20 +141,16 @@ class Brio
 
             if (! is_callable($callback))
             {
-                // Really weird case...
-
-                touch($cacheFile, 300, 300);
+                touch($cacheFile, 100, 100);
                 chmod($cacheFile, 0777);
 
                 // Compile temporarily
 
                 $compiler = static::getCompiler();
 
-                $code = $compiler->compileFile($view, false, $vars);
+                $fileString = $compiler->compileFile($view, false, $vars);
 
-                eval($code);
-
-                return $callback($vars, $return, $blocks);
+                eval($fileString);
             }
         }
 
