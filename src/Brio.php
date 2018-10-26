@@ -146,8 +146,6 @@ class Brio
 
                 // Compile temporarily
 
-                $compiler = static::getCompiler();
-
                 $fileString = $compiler->compileFile($view, false, $vars);
 
                 eval($fileString);
