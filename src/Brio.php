@@ -143,11 +143,6 @@ class Brio
             {
                 touch($cacheFile, 100, 100);
                 chmod($cacheFile, 0777);
-
-                // Compile temporarily
-
-                $fileString = $compiler->compileFile($view, false, $vars);
-
                 eval($fileString);
             }
         }
