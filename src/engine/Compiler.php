@@ -7,25 +7,18 @@ use placer\brio\engine\generator\PHP as PhpGenerator;
 class Compiler
 {
     /**
+     * Compiler instance
+     *
+     * @var placer\brio\engine\Compiler
+     */
+    private static $instance;
+
+    /**
      * Generator
      *
      * @var object
      */
     protected $generator;
-
-    /**
-     * Forloops
-     *
-     * @var array
-     */
-    protected $forloop = [];
-
-    /**
-     * Forid
-     *
-     * @var integer
-     */
-    protected $forid = 0;
 
     /**
      * Subtemplate
@@ -42,18 +35,32 @@ class Compiler
     protected $templateName;
 
     /**
-     * Check function
-     *
-     * @var boolean
-     */
-    protected $checkFunction = false;
-
-    /**
      * Blocks
      *
      * @var array
      */
     protected $blocks = [];
+
+    /**
+     * Forloops
+     *
+     * @var array
+     */
+    protected $forloop = [];
+
+    /**
+     * Forid
+     *
+     * @var integer
+     */
+    protected $forid = 0;
+
+    /**
+     * Check function
+     *
+     * @var boolean
+     */
+    protected $checkFunction = false;
 
     /**
      * File
@@ -139,7 +146,16 @@ class Compiler
      */
     protected static $blockVar;
 
-    // Compiler options here!!!
+    // Compiler options
+
+    protected static $autoescape      = true;
+    protected static $ifEmpty         = true;
+    protected static $dotObject       = true;
+    protected static $stripWhitespace = false;
+    protected static $allowExec       = false;
+    protected static $globalContext   = [];
+    protected static $echoConcat      = '.';
+    protected static $enableLoad      = true;
 
     /**
      * Constructor
@@ -149,7 +165,21 @@ class Compiler
     {
         $this->generator = new PhpGenerator;
 
-        self::$blockVar = '{{block.' . sha1(time()) . '}}';
+        static::$blockVar = '{{block.' . sha1(time()) . '}}';
+    }
+
+    /**
+     * Get instance
+     *
+     * @return placer\brio\engine\Compiler
+     */
+    public static function getInstance()
+    {
+        if (static::$instance === null)
+        {
+            static::$instance = new static;
+        }
+        return static::$instance;
     }
 
     /**
@@ -163,7 +193,48 @@ class Compiler
      */
     public function compileFile(string $file, $safe = false, $context = [])
     {
-        return '';
+        if (! is_readable($file))
+        {
+            throw new BrioException(vsprintf('Cannot read view file [ %s ]', [$file]));
+        }
+
+        $this->setTemplateName($file);
+
+        $this->file           = realpath($file);
+        $this->line           = 0;
+        $this->checkFunction  = $safe;
+        $this->context        = $context;
+
+        $content = file_get_contents($file);
+
+        return $this->compile($content, $file);
+    }
+
+    /**
+     * Set template name
+     *
+     * @param string $path Path to template file
+     *
+     * @return void
+     */
+    protected function setTemplateName($path)
+    {
+        $this->templateName = $path;
+    }
+
+    /**
+     * Final compile
+     *
+     * @param  string $content
+     * @param  string $file
+     *
+     * @return string
+     */
+    private function compile(string $content, string $file)
+    {
+        // ...
+
+        return $content;
     }
 
 }

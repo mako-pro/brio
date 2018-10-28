@@ -2,7 +2,6 @@
 
 namespace placer\brio;
 
-use placer\brio\engine\compiler\RuntimeCompiler;
 use placer\brio\engine\BrioException;
 use placer\brio\engine\Compiler;
 
@@ -216,22 +215,18 @@ class Brio
     }
 
     /**
-     *  Get RuntimeCompiler instance
-     *  The instance is already set up properly and resetted
+     *  Get Compiler instance
      *
-     *  @return placer\brio\engine\compiler\RuntimeCompiler
+     *  @return placer\brio\engine\Compiler
      */
     protected static function getCompiler()
     {
+        $compiler = Compiler::getInstance();
+
         if (! empty(static::$compilerOptions))
         {
-            foreach (static::$compilerOptions as $key => $val)
-            {
-                Compiler::setOption($key, $val);
-            }
+            $compiler->setOptions(static::$compilerOptions);
         }
-
-        $compiler = new RuntimeCompiler;
 
         $compiler->reset();
 
