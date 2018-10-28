@@ -32,6 +32,8 @@ class BrioRenderer implements RendererInterface
      */
     public function render(string $view, array $variables): string
     {
+        unset($variables['__viewfactory__']);
+
         return (string) $this->brio->load($view, $variables);
     }
 
