@@ -115,9 +115,9 @@ class Brio
 
         $compiler = static::getCompiler();
 
-        if (static::$debug)
+        if (static::$debug === true)
         {
-            $compiler->setDebug($cacheFile . '.dump');
+            $compiler->setDebugFile($cacheFile . '.dump');
         }
 
         $fileString = $compiler->compileFile($view, false, $vars);
