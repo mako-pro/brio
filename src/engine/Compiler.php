@@ -3,6 +3,8 @@
 namespace placer\brio\engine;
 
 use placer\brio\engine\generator\PHP as PhpGenerator;
+use placer\brio\engine\helper\AST;
+use placer\brio\engine\helper\BH;
 
 class Compiler
 {
@@ -21,18 +23,11 @@ class Compiler
     protected $generator;
 
     /**
-     * Subtemplate
+     * Base temlate
      *
-     * @var string
+     * @var array
      */
-    protected $subtemplate;
-
-    /**
-     * Template name
-     *
-     * @var string
-     */
-    protected $templateName;
+    protected $baseTemplate = [];
 
     /**
      * Blocks
@@ -63,18 +58,11 @@ class Compiler
     protected $checkFunction = false;
 
     /**
-     * File
+     * Template file
      *
      * @var string
      */
-    protected $file;
-
-    /**
-     * Line
-     *
-     * @var integer
-     */
-    protected $line = 0;
+    protected $templateFile;
 
     /**
      * Number of blocks
@@ -119,11 +107,11 @@ class Compiler
     protected $varAliases = [];
 
     /**
-     * Debug
+     * Debug file
      *
      * @var string
      */
-    protected $debug;
+    protected $debugFile;
 
     /**
      * Safe variables
@@ -133,18 +121,18 @@ class Compiler
     protected $safes = [];
 
     /**
+     * Block placeholder
+     *
+     * @var string
+     */
+    protected $blockVar;
+
+    /**
      * Flag the current variable as safe
      *
      * @var boolean
      */
     public $safeVariable = false;
-
-    /**
-     * Block
-     *
-     * @var string
-     */
-    protected static $blockVar;
 
     // Compiler options
 
@@ -153,19 +141,16 @@ class Compiler
     protected static $dotObject       = true;
     protected static $stripWhitespace = false;
     protected static $allowExec       = false;
-    protected static $globalContext   = [];
-    protected static $echoConcat      = '.';
     protected static $enableLoad      = true;
 
     /**
      * Constructor
-     *
      */
     function __construct()
     {
         $this->generator = new PhpGenerator;
 
-        static::$blockVar = '{{block.' . sha1(time()) . '}}';
+        $this->blockVar = 'block_' . uniqid();
     }
 
     /**
@@ -183,6 +168,150 @@ class Compiler
     }
 
     /**
+     * Get option
+     *
+     * @param  string $option Option name
+     *
+     * @return mixed
+     */
+    public static function getOption(string $option)
+    {
+        if (isset(static::${$option}))
+        {
+            return static::${$option};
+        }
+        return null;
+    }
+
+    /**
+     * Set compiler options
+     *
+     * @param array $options
+     *
+     * @return  void
+     */
+    public function setOptions(array $options = [])
+    {
+        foreach ($options as $key => $val)
+        {
+            if (property_exists($this, $key))
+            {
+                static::${$key} = $val;
+            }
+        }
+    }
+
+    /**
+     * Set debug file
+     *
+     * @param string $file
+     *
+     * @return  void
+     */
+    public function setDebugFile(string $file)
+    {
+        $this->debugFile = $file;
+    }
+
+    /**
+     * Reset the Compiler instance
+     *
+     * @return void
+     */
+    public function reset()
+    {
+        $varKeys = array_keys(get_object_vars($this));
+
+        foreach ($varKeys as $key)
+        {
+            if ($key != 'generator' && $key != 'blockVar')
+            {
+                $this->$key = null;
+            }
+        }
+    }
+
+    /**
+     * Get function name
+     *
+     * @param  string $name
+     *
+     * @return string
+     */
+    public function getFunctionName(string $name)
+    {
+        return "brio_" . sha1($name);
+    }
+
+    /**
+     * Get scope variable
+     *
+     * @param  integer  $part
+     * @param  boolean $string
+     *
+     * @return mixed
+     */
+    public function getScopeVariable($part = null, $string = false)
+    {
+        static $var = null;
+
+        if ($var === null)
+        {
+            $var = 'vars_' . uniqid(true);
+        }
+
+        if ($string)
+        {
+            return $var;
+        }
+
+        if ($part !== null)
+        {
+            return BH::hvar($var, $part);
+        }
+
+        return BH::hvar($var);
+    }
+
+    /**
+     * Do print
+     *
+     * @param  object         $code
+     * @param  array|object  $stmt
+     *
+     * @return void
+     */
+    public function doPrint(AST $code, $stmt)
+    {
+        $code->doesPrint = true;
+
+        if (self::$stripWhitespace && AST::is_str($stmt))
+        {
+            $stmt['string'] = preg_replace('/\s+/', ' ', $stmt['string']);
+        }
+
+        if ($this->obstartNum == 0)
+        {
+            $code->do_echo($stmt);
+            return;
+        }
+
+        $buffer = BH::hvar('buffer_' . $this->obstartNum);
+
+        $code->append($buffer, $stmt);
+    }
+
+    /**
+     * Get template name
+     *
+     * @return string Path to template file
+     */
+    private function getTemplateName()
+    {
+        return $this->templateFile;
+    }
+
+    /**
      *  Compile a file
      *
      *  @param string $file      File path
@@ -193,33 +322,13 @@ class Compiler
      */
     public function compileFile(string $file, $safe = false, $context = [])
     {
-        if (! is_readable($file))
-        {
-            throw new BrioException(vsprintf('Cannot read view file [ %s ]', [$file]));
-        }
-
-        $this->setTemplateName($file);
-
-        $this->file           = realpath($file);
-        $this->line           = 0;
-        $this->checkFunction  = $safe;
-        $this->context        = $context;
+        $this->templateFile  = $file;
+        $this->checkFunction = $safe;
+        $this->context       = $context;
 
         $content = file_get_contents($file);
 
         return $this->compile($content, $file);
-    }
-
-    /**
-     * Set template name
-     *
-     * @param string $path Path to template file
-     *
-     * @return void
-     */
-    protected function setTemplateName($path)
-    {
-        $this->templateName = $path;
     }
 
     /**
