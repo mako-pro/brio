@@ -230,29 +230,29 @@ class Compiler
     /**
      * Do print
      *
-     * @param  object         $code
+     * @param  AST           $code
      * @param  array|object  $stmt
      *
      * @return void
      */
-    public function doPrint(AST $code, $stmt)
+    public function doPrint(AST $ast, $stmt)
     {
-        $code->doesPrint = true;
+        $ast->doesPrint = true;
 
-        if (self::$stripWhitespace && AST::is_str($stmt))
+        if (static::$stripWhitespace && AST::isStr($stmt))
         {
             $stmt['string'] = preg_replace('/\s+/', ' ', $stmt['string']);
         }
 
         if ($this->obstartNum == 0)
         {
-            $code->do_echo($stmt);
+            $ast->doEcho($stmt);
             return;
         }
 
         $buffer = BH::hvar('buffer_' . $this->obstartNum);
 
-        $code->append($buffer, $stmt);
+        $ast->append($buffer, $stmt);
     }
 
     /**
@@ -355,74 +355,231 @@ class Compiler
     }
 
     /**
-     * Generate OpCode
+     * Generate Operation Code
      *
      * @param  array  $parsed
-     * @param  AST    &$ast
+     * @param  AST    &$body
      *
      * @return void
      */
-    protected function generateOpCode(array $parsed, AST &$ast): void
+    protected function generateOperationCode(array $parsed, AST &$body)
     {
-
-        foreach ($parsed as $op)
+        foreach ($parsed as $structure)
         {
-            if (! is_array($op))
+            if (! is_array($structure))
             {
                 continue;
             }
 
-            if (! isset($op['operation']))
+            if (! isset($structure['operation']))
             {
-                throw new CompilerException("Invalid parsed data: " . print_r($op, true));
+                throw new CompilerException("Invalid parsed data: " . print_r($structure, true));
             }
 
-            if ($this->baseTemplate && $this->numBlocks == 0 && $op['operation'] != 'block')
+            if ($this->baseTemplate && $this->numBlocks == 0 && $structure['operation'] != 'block')
             {
                 continue;
             }
 
-            $method = 'generateOp' . Str::underscored2camel($op['operation']);
+            $method = 'generateOperation' . Str::underscored2camel($structure['operation']);
 
             if (! is_callable([$this, $method]))
             {
-                throw new CompilerException("Missing Compiler method $method");
+                throw new CompilerException("Missing Compiler method [ $method ]");
             }
 
-            $this->$method($op, $ast);
+            $this->$method($structure, $body);
         }
     }
 
     /**
-     * Exception handler for Base Operation
+     * Exception handler for operation "Base"
      *
      * @return CompilerException
      */
-    protected function generateOpBase()
+    protected function generateOperationBase()
     {
         throw new CompilerException("{% base %} can be only as first statement");
     }
 
     /**
-     * Include file
+     * Generate operation "Include"
      *
-     * @param  array $details
+     * @param  array $structure
      * @param  AST  &$body
      *
      * @return void
      */
-    protected function generateOpInclude(array $details, &$body)
+    protected function generateOperationInclude(array $structure, &$body)
     {
         $this->doPrint(
             $body,
             BH::hexec(
                 'placer\brio\Brio::load',
-                $details[0],
+                $structure[0],
                 $this->getScopeVariable(),
                 true,
                 BH::hvar('blocks')
             )
         );
+    }
+
+    /**
+     * Generate operation "Block"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationBlock(array $structure, &$body)
+    {
+        $this->numBlocks++;
+
+        $this->blocks[] = $structure['name'];
+
+        $blockName = BH::hvar('blocks', $structure['name']);
+
+        $this->obStart($body);
+
+        $bufferVar = 'buffer_' . $this->obstartNum;
+
+        $ast = new AST;
+
+        $this->generateOperationCode($structure['body'], $ast);
+
+        $body->appendAST($ast);
+
+        $this->obstartNum--;
+
+        $buffer = BH::hvar($bufferVar);
+
+        $declare = BH::hexpr_cond(
+            BH::hexec('isset', $blockName),
+            BH::hexpr_cond(
+                BH::hexpr(BH::hexec('strpos', $blockName, $this->blockVar), '===', false),
+                $blockName,
+                BH::hexec('str_replace', $this->blockVar, $buffer, $blockName)
+            ),
+            $buffer
+        );
+
+        if (! $this->baseTemplate)
+        {
+            $this->doPrint($body, $declare);
+        }
+        else
+        {
+            $body->decl($blockName, $declare);
+
+            if ($this->numBlocks > 1)
+            {
+                $this->doPrint($body, $blockName);
+            }
+        }
+
+        array_pop($this->blocks);
+
+        $this->numBlocks--;
+    }
+
+    /**
+     * Generate operation "If Equal"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationIfequal(array $structure, &$body)
+    {
+        $structureIf['expr'] = BH::hexpr($structure[1], $structure['cmp'], $structure[2])->getArray();
+        $structureIf['body'] = $structure['body'];
+
+        if (isset($structure['else']))
+        {
+            $structureIf['else'] = $structure['else'];
+        }
+        $this->generateOperationIf($structureIf, $body);
+    }
+
+
+    /**
+     * Generate operation "If"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationIf(array $structure, &$body)
+    {
+        if (static::$ifEmpty && $this->varFilter($structure['expr']) && count($structure['expr']['var_filter']) == 1)
+        {
+
+            $expr = $structure['expr'];
+
+            $expr['var_filter'][] = 'empty';
+
+            $variable = $this->getFilteredVar($expr['var_filter']);
+
+            $structure['expr'] = BH::hexpr($variable, '===', false)->getArray();
+        }
+
+        $this->checkExpr($structure['expr']);
+
+        $expr = AST::fromArrayGetAST($structure['expr']);
+
+        $body->doIf($expr);
+
+        $this->generateOperationCode($structure['body'], $body);
+
+        if (isset($structure['else']))
+        {
+            $body->doElse();
+
+            $this->generateOperationCode($structure['else'], $body);
+        }
+
+        $body->doEndif();
+    }
+
+    /**
+     * Handle HTML code
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationHtml(array $structure, &$body)
+    {
+        $string = AST::str($structure['html']);
+
+        $this->doPrint($body, $string);
+    }
+
+    /**
+     * Generate code to print a variable with its filters, if there is any
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationPrintVar(array $structure, &$body)
+    {
+        $expr = $structure['expr'];
+
+        $this->checkExpr($expr);
+
+        if (! $this->isSafe($expr) && static::$autoescape)
+        {
+            $args = [$expr];
+            $expr = $this->doFiltering('escape', $args);
+        }
+
+        $this->doPrint($body, $expr);
     }
 
     /**
@@ -434,7 +591,7 @@ class Compiler
      */
     protected function checkExpr(array &$expr)
     {
-        if (AST::is_expr($expr))
+        if (AST::isExpr($expr))
         {
             if ($expr['op_expr'] == 'in')
             {
@@ -442,11 +599,11 @@ class Compiler
                 {
                     if ($this->varFilter($expr[$id]))
                     {
-                        $expr[$id] = $this->getFilteredVar($expr[$id]['var_filter'], $var);
+                        $expr[$id] = $this->getFilteredVar($expr[$id]['var_filter']);
                     }
                 }
 
-                if (AST::is_str($expr[1]))
+                if (AST::isStr($expr[1]))
                 {
                     $expr = BH::hexpr(
                         BH::hexec(
@@ -485,7 +642,7 @@ class Compiler
         {
             if ($this->varFilter($expr))
             {
-                $expr = $this->getFilteredVar($expr['var_filter'], $var);
+                $expr = $this->getFilteredVar($expr['var_filter']);
             }
             elseif (isset($expr['args']))
             {
@@ -502,6 +659,58 @@ class Compiler
                 $this->checkExpr($expr['false']);
             }
         }
+    }
+
+    /**
+     *  Handles all the filtered variables output in the parser
+     *
+     *  @param array $vars
+     *
+     *  @return expr
+     *
+     */
+    protected function getFilteredVar(array $vars)
+    {
+        $this->safeVariable = false;
+
+        if (($count = count($vars)) > 1)
+        {
+;           if (AST::isExec($vars[0]) || ($vars[0][0] === 'block' && isset($vars[0]['string'])))
+            {
+                $target = $vars[0];
+            }
+            else
+            {
+                $target = $this->generateVariableName($vars[0]);
+            }
+
+            for ($i=1; $i<$count; $i++)
+            {
+                $fName = $vars[$i];
+
+                if ($fName == 'escape')
+                {
+                    $this->safeVariable = true;
+                }
+
+                $exec = $this->doFiltering($fName, [$target]);
+            }
+
+            $returns = $exec;
+        }
+        else
+        {
+            if (AST::isExec($vars[0]))
+            {
+                $returns = $vars[0];
+            }
+            else
+            {
+                $returns = $this->generateVariableName($vars[0]);
+            }
+        }
+
+        return $returns;
     }
 
     /**
@@ -552,7 +761,7 @@ class Compiler
         $ast->doExec('ob_start');
         $ast->doEndif();
 
-        $this->generateOpCode($parsed, $ast);
+        $this->generateOperationCode($parsed, $ast);
 
         if ($this->baseTemplate)
         {
