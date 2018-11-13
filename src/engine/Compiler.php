@@ -2,6 +2,8 @@
 
 namespace placer\brio\engine;
 
+use Iterator;
+use ArrayAccess;
 use mako\utility\Str;
 use placer\brio\engine\generator\PHP as PhpGenerator;
 use placer\brio\engine\compiler\CompilerException;
@@ -227,6 +229,90 @@ class Compiler
         }
     }
 
+   /**
+    * Set the variable context
+    *
+    * @param string $varname
+    * @param mixed $value
+    *
+    * @return void
+    */
+    public function setContext(string $varname, $value = null)
+    {
+        $this->context[$varname] = $value;
+    }
+
+    /**
+     * Get variables context
+     *
+     * @param  string|array $variable
+     *
+     * @return mixed
+     */
+    public function getContext($variable)
+    {
+        $variable = (array) $variable;
+
+        $varName = $variable[0];
+
+        if (isset($this->context[$varName]))
+        {
+            if (count($variable) === 1)
+            {
+                return $this->context[$varName];
+            }
+
+            $var = &$this->context[$varName];
+
+            foreach ($variable as $id => $part)
+            {
+                if ($id !== 0)
+                {
+                    if (is_array($part) && isset($part['object']))
+                    {
+                        if (is_array($part['object']) && isset($part['object']['var']))
+                        {
+                            $name = $part['object']['var'];
+                            $name = $this->getContext($name);
+
+                            if (! isset($var->$name))
+                            {
+                                return null;
+                            }
+                            $var = &$var->$name;
+                        }
+                        else
+                        {
+                            if (! isset($var->{$part['object']}))
+                            {
+                                return null;
+                            }
+                            $var = &$var->{$part['object']};
+                        }
+                    }
+                    elseif (is_object($var))
+                    {
+                        if (! isset($var->$part))
+                        {
+                            return null;
+                        }
+                        $var = &$var->$part;
+                    }
+                    else
+                    {
+                        if (! is_scalar($part) || empty($part) || ! isset($var[$part]))
+                        {
+                            return null;
+                        }
+                        $var = &$var[$part];
+                    }
+                }
+            }
+            return $var;
+        }
+        return null;
+    }
+
     /**
      * Do print
      *
@@ -327,6 +413,145 @@ class Compiler
     }
 
     /**
+     *  Compile the $body to operation code
+     *
+     *  @param string $file Path to compiled file
+     *  @param AST   $body
+     *
+     *  @return void
+     */
+    public function compileCode(string $file, AST $body)
+    {
+        $parsed = Tokenizer::init($this, file_get_contents($file));
+
+        $this->generateOperationCode($parsed, $body);
+    }
+
+    /**
+     * Get variable name
+     *
+     * @param  string|array  $variable
+     * @param  boolean      $special
+     *
+     * @return array
+     */
+    public function generateVariableName($variable, $special = true)
+    {
+        if (is_array($variable))
+        {
+            switch ($variable[0])
+            {
+                case 'forloop':
+                    if (! $special)
+                    {
+                        return ['var' => $variable];
+                    }
+                    if (! $this->forid)
+                    {
+                        throw new CompilerException("Invalid forloop reference outside of a loop");
+                    }
+                    switch ($variable[1]['object'])
+                    {
+                        case 'counter':
+                            $this->forloop[$this->forid]['counter'] = true;
+                            $variable = 'forcounter1_' . $this->forid;
+                            break;
+                        case 'counter0':
+                            $this->forloop[$this->forid]['counter0'] = true;
+                            $variable = 'forcounter0_' . $this->forid;
+                            break;
+                        case 'last':
+                            $this->forloop[$this->forid]['counter'] = true;
+                            $this->forloop[$this->forid]['last'] = true;
+                            $variable = 'islast_' . $this->forid;
+                            break;
+                        case 'first':
+                            $this->forloop[$this->forid]['first'] = true;
+                            $variable = 'isfirst_' . $this->forid;
+                            break;
+                        case 'revcounter':
+                            $this->forloop[$this->forid]['revcounter'] = true;
+                            $variable = 'revcount_' . $this->forid;
+                            break;
+                        case 'revcounter0':
+                            $this->forloop[$this->forid]['revcounter0'] = true;
+                            $variable = 'revcount0_' . $this->forid;
+                            break;
+                        case 'parentloop':
+                            unset($variable[1]);
+                            $this->forid--;
+                            $variable = $this->generateVariableName(array_values($variable));
+                            $variable = $variable['var'];
+                            $this->forid++;
+                            break;
+                        default:
+                            throw new CompilerException("Unexpected forloop.{$variable[1]}");
+                    }
+                $this->safeVariable = true;
+                break;
+            case 'block':
+                if (! $special)
+                {
+                    return ['var' => $variable];
+                }
+                if ($this->numBlocks == 0)
+                {
+                    throw new CompilerException("Can't use block.super outside a block");
+                }
+                if (! $this->baseTemplate)
+                {
+                    throw new CompilerException("Only subtemplates can call block.super");
+                }
+                $this->safeVariable = true;
+                return AST::str($this->blockVar);
+                break;
+            default:
+                if ($special)
+                {
+                    return ['var' => $variable];
+                }
+                for ($i=1; $i < count($variable); $i++)
+                {
+                    $varPart = array_slice($variable, 0, $i);
+                    $defArr  = true;
+
+                    if (is_array($variable[$i]))
+                    {
+                        if (isset($variable[$i]['class']))
+                        {
+                            continue;
+                        }
+                        if (isset($variable[$i]['object']))
+                        {
+                            $defArr = false;
+                        }
+                        if (! AST::isVar($variable[$i]))
+                        {
+                            $variable[$i] = current($variable[$i]);
+                        }
+                        else
+                        {
+                            $variable[$i] = $this->generateVariableName($variable[$i]['var']);
+                        }
+                    }
+
+                    $isObj = $this->varIsObject($varPart, 'unknown');
+
+                    if ( $isObj === true || ($isObj == 'unknown' && ! $defArr)) {
+                        $variable[$i] = ['object' => $variable[$i]];
+                    }
+                }
+                break;
+            }
+        }
+        elseif (isset($this->varAliases[$variable]))
+        {
+            $variable = $this->varAliases[$variable]['var'];
+        }
+        return BH::hvar($variable)->getArray();
+    }
+
+    /**
      *  Set base template
      *
      *  @param array $base Base template as ['string' => 'template.name']
@@ -400,6 +625,25 @@ class Compiler
     protected function generateOperationBase()
     {
         throw new CompilerException("{% base %} can be only as first statement");
+    }
+
+    /**
+     * Generate operation "Set"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    function generateOperationSet(array $structure, &$body)
+    {
+        $var = $this->generateVariableName($structure['var']);
+
+        $this->checkExpr($structure['expr']);
+
+        $body->declRaw($var, $structure['expr']);
+
+        $body->decl($this->getScopeVariable($var['var']), $var);
     }
 
     /**
@@ -481,6 +725,152 @@ class Compiler
         array_pop($this->blocks);
 
         $this->numBlocks--;
+    }
+
+    /**
+     * Generate operation "Loop"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationLoop(array $structure, &$body)
+    {
+        if (isset($structure['empty']))
+        {
+            $body->doIf(BH::hexpr(BH::hexec('count', BH::hvar($structure['array'])), '==', 0));
+            $this->generateOperationCode($structure['empty'], $body);
+            $body->doElse();
+        }
+
+        $oldID = $this->forid;
+        $this->forid = $oldID+1;
+
+        $this->forloop[$this->forid] = [];
+
+        if (isset($structure['range']))
+        {
+            $this->setSafe($structure['variable']);
+        }
+        else
+        {
+            $var = &$structure['array'][0];
+
+            if (is_string($var) && $this->varIsObject([$var], false))
+            {
+                $body->decl($var . '_arr', BH::hexec('get_object_vars', BH::hvar($var)));
+                $var .= '_arr';
+            }
+
+            $variables = $this->getFilteredVar($structure['array']);
+
+            if ($variables Instanceof AST)
+            {
+                $tmp = BH::hvar('tmp' . ($oldID+1));
+                $body->decl($tmp, $variables);
+                $variables = $tmp;
+            }
+
+            $structure['array'] = $variables;
+        }
+
+        $forBody = new AST;
+
+        $this->generateOperationCode($structure['body'], $forBody);
+
+        $forID = $this->forid;
+        $size  = BH::hvar('psize_' . $forID);
+
+        if (isset($this->forloop[$forID]['counter']))
+        {
+            $var = BH::hvar('forcounter1_' . $forID);
+            $body->decl($var, 1);
+            $forBody->decl($var, BH::hexpr($var, '+', 1));
+        }
+
+        if (isset($this->forloop[$forID]['counter0']))
+        {
+            $var = BH::hvar('forcounter0_' . $forID);
+            $body->decl($var, 0);
+            $forBody->decl($var, BH::hexpr($var, '+', 1));
+        }
+
+        if (isset($this->forloop[$forID]['last']))
+        {
+            if (! isset($cnt))
+            {
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $cnt = true;
+            }
+
+            $var = 'islast_' . $forID;
+            $body->decl($var, BH::hexpr(BH::hvar('forcounter1_' . $forID), '==', $size));
+            $forBody->decl($var, BH::hexpr(BH::hvar('forcounter1_' . $forID), '==', $size));
+        }
+
+        if (isset($this->forloop[$forID]['first']))
+        {
+            $var = BH::hvar('isfirst_' . $forID);
+            $body->decl($var, true);
+            $forBody->decl($var, false);
+        }
+
+        if (isset($this->forloop[$forID]['revcounter']))
+        {
+            if (! isset($cnt))
+            {
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $cnt = true;
+            }
+
+            $var = BH::hvar('revcount_' . $forID);
+            $body->decl($var, $size);
+            $forBody->decl($var, BH::hexpr($var, '-', 1));
+        }
+
+        if (isset($this->forloop[$forID]['revcounter0']))
+        {
+            if (! isset($cnt))
+            {
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $cnt = true;
+            }
+
+            $var = BH::hvar('revcount0_' . $forID);
+            $body->decl($var, BH::hexpr($size, "-", 1));
+            $forBody->decl($var, BH::hexpr($var, '-', 1));
+        }
+
+        $this->forid = $oldID;
+
+        if (! isset($structure['range']))
+        {
+            $body->doForeach($variables, $structure['variable'], $structure['index'], $forBody);
+        }
+        else
+        {
+            for ($i=0; $i<2; $i++)
+            {
+                if (AST::isVar($structure['range'][$i]))
+                {
+                    $structure['range'][$i] = $this->generateVariableName($structure['range'][$i]['var']);
+                }
+            }
+
+            if (AST::isVar($structure['step']))
+            {
+                $structure['step'] = $this->generateVariableName($structure['step']['var']);
+            }
+
+            $body->doFor($structure['variable'], $structure['range'][0], $structure['range'][1], $structure['step'], $forBody);
+            $this->setUnsafe(BH::hvar($structure['variable']));
+        }
+
+        if (isset($structure['empty']))
+        {
+            $body->doEndif();
+        }
     }
 
     /**
@@ -723,6 +1113,47 @@ class Compiler
     protected function varFilter(array $cmd)
     {
         return isset($cmd['var_filter']);
+    }
+
+    /**
+     * Check if variable is object
+     *
+     * @param   array  $variable Variable
+     * @param  string $default  Default returns
+     *
+     * @return boolean
+     */
+    protected function varIsObject(array $variable, $default = null)
+    {
+        $varname = $variable[0];
+
+        switch ($varname)
+        {
+            case 'GLOBALS':
+            case '_SERVER':
+            case '_GET':
+            case '_POST':
+            case '_FILES':
+            case '_COOKIE':
+            case '_SESSION':
+            case '_REQUEST':
+            case '_ENV':
+            case 'forloop':
+            case 'block':
+                return false;
+        }
+
+        $variable = $this->getContext($variable);
+
+        if (is_array($variable) || is_object($variable))
+        {
+            return $default ? is_object($variable) :
+                is_object($variable) &&
+                ! $variable InstanceOf Iterator &&
+                ! $variable Instanceof ArrayAccess;
+        }
+
+        return $default === null ? static::$dotObject : $default;
     }
 
     /**
