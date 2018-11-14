@@ -426,6 +426,23 @@ class Compiler
     }
 
     /**
+     * Set variable to safe
+     *
+     * @param string $name Var name
+     *
+     * @return  void
+     */
+    public function setSafe(string $name)
+    {
+        if (! AST::isVar($name))
+        {
+            $name = BH::hvar($name)->getArray();
+        }
+
+        $this->safes[serialize($name)] = true;
+    }
+
+    /**
      * Get variable name
      *
      * @param  string|array  $variable
@@ -633,7 +650,7 @@ class Compiler
      *
      * @return void
      */
-    function generateOperationSet(array $structure, &$body)
+    protected function generateOperationSet(array $structure, &$body)
     {
         $var = $this->generateVariableName($structure['var']);
 
@@ -1014,7 +1031,7 @@ class Compiler
      *
      * @return void
      */
-    function generateOperationAutoescape(array $structure, &$body)
+    protected function generateOperationAutoescape(array $structure, &$body)
     {
         $autoescape = static::$autoescape;
 
@@ -1034,7 +1051,7 @@ class Compiler
      *
      * @return void
      */
-    function generateOperationSpacefull(array $structure, &$body)
+    protected function generateOperationSpacefull(array $structure, &$body)
     {
         $stripWhitespace = static::$stripWhitespace;
 
@@ -1054,7 +1071,7 @@ class Compiler
      *
      * @return void
      */
-    function generateOperationAlias(array $structure, &$body)
+    protected function generateOperationAlias(array $structure, &$body)
     {
         $this->varAliases[$structure['as']] = $this->generateVariableName($structure['var']);
 
@@ -1109,7 +1126,7 @@ class Compiler
      *
      * @return void
      */
-    function generateOperationCustomTag(array $structure, &$body)
+    protected function generateOperationCustomTag(array $structure, &$body)
     {
         $tag = Extension::getInstance('Tag');
 
@@ -1498,23 +1515,6 @@ class Compiler
         }
 
         return $default === null ? static::$dotObject : $default;
-    }
-
-    /**
-     * Set variable to safe
-     *
-     * @param string $name Var name
-     *
-     * @return  void
-     */
-    public function setSafe(string $name)
-    {
-        if (! AST::isVar($name))
-        {
-            $name = BH::hvar($name)->getArray();
-        }
-
-        $this->safes[serialize($name)] = true;
     }
 
     /**
