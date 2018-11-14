@@ -1102,82 +1102,167 @@ class Compiler
     }
 
     /**
-     * Check the current expr
+     * Generate operation "Custom Tag"
      *
-     * @param  array &$expr
+     * @param  array $structure
+     * @param  AST  &$body
      *
      * @return void
      */
-    protected function checkExpr(array &$expr)
+    function generateOperationCustomTag(array $structure, &$body)
     {
-        if (AST::isExpr($expr))
+        $tag = Extension::getInstance('Tag');
+
+        foreach ($structure['list'] as $id => $arg)
         {
-            if ($expr['op_expr'] == 'in')
+            if (AST::isVar($arg))
             {
-                for ($id=0; $id<2; $id++)
-                {
-                    if ($this->varFilter($expr[$id]))
-                    {
-                        $expr[$id] = $this->getFilteredVar($expr[$id]['var_filter']);
-                    }
-                }
-
-                if (AST::isStr($expr[1]))
-                {
-                    $expr = BH::hexpr(
-                        BH::hexec(
-                            'strpos',
-                            $expr[1],
-                            $expr[0]
-                        ),
-                        '!==',
-                        false
-                    );
-                }
-                else
-                {
-                    $expr = BH::hexpr(
-                        BH::hexpr_cond(
-                            BH::hexec('is_array', $expr[1]),
-                            BH::hexec('array_search', $expr[0], $expr[1]),
-                            BH::hexec('strpos', $expr[1], $expr[0])
-                        ),
-                        '!==',
-                        false
-                    );
-                }
-            }
-
-            if (is_object($expr))
-            {
-                $expr = $expr->getArray();
-            }
-
-            $this->checkExpr($expr[0]);
-            $this->checkExpr($expr[1]);
-
-        }
-        elseif (is_array($expr))
-        {
-            if ($this->varFilter($expr))
-            {
-                $expr = $this->getFilteredVar($expr['var_filter']);
-            }
-            elseif (isset($expr['args']))
-            {
-                foreach ($expr['args'] as &$v)
-                {
-                    $this->checkExpr($v);
-                }
-                unset($v);
-            }
-            else if (isset($expr['expr_cond']))
-            {
-                $this->checkExpr($expr['expr_cond']);
-                $this->checkExpr($expr['true']);
-                $this->checkExpr($expr['false']);
+                $structure['list'][$id] = $this->generateVariableName($arg['var']);
             }
         }
+
+        $tagName = $structure['name'];
+
+        $tagFunction = $tag->getFunctionAlias($tagName);
+
+        if (! $tagFunction && ! $tag->hasGenerator($tagName))
+        {
+            $functionName = $this->getCustomTag($tagName);
+        }
+        else
+        {
+            $functionName = $tagFunction;
+        }
+
+        if (isset($structure['body']))
+        {
+            $this->obStart($body);
+
+            $this->generateOperationCode($structure['body'], $body);
+
+            $target = BH::hvar('buffer_'.$this->obstartNum);
+
+            if ($tag->hasGenerator($tagName))
+            {
+                $args = array_merge([$target], $structure['list']);
+                $exec = $tag->generator($tagName, $this, $args);
+
+                if (! $exec InstanceOf AST)
+                {
+                    throw new CompilerException("Invalid output of custom filter {$tagName}");
+                }
+
+                if ($exec->stackSize() >= 2 || $exec->doesPrint)
+                {
+                    $body->appendAST($exec);
+                    $this->obstartNum--;
+                    return;
+                }
+            }
+            else
+            {
+                $exec = BH::hexec($functionName, $target);
+            }
+
+            $this->obstartNum--;
+            $this->doPrint($body, $exec);
+            return;
+        }
+
+        $var = isset($structure['as']) ? $structure['as'] : null;
+        $args = array_merge([$functionName], $structure['list']);
+
+        if ($tag->hasGenerator($tagName))
+        {
+            $exec = $tag->generator($tagName, $this, $structure['list'], $var);
+
+            if ($exec InstanceOf AST)
+            {
+                if ($exec->stackSize() >= 2 || $exec->doesPrint || $var !== null)
+                {
+                    $body->appendAST($exec);
+                    return;
+                }
+            }
+            else
+            {
+                throw new CompilerException("Invalid output of the custom tag {$tagName}");
+            }
+        }
+        else
+        {
+            $fnc = array_shift($args);
+            $exec = BH::hexec($fnc);
+
+            foreach ($args as $arg)
+            {
+                $exec->param($arg);
+            }
+        }
+
+        if ($var)
+        {
+            $body->decl($var, $exec);
+        }
+        else
+        {
+            $this->doPrint($body, $exec);
+        }
+    }
+
+    /**
+     * Get custom tag
+     *
+     * @param  string $name Tag name
+     *
+     * @return string Calling Class::method
+     */
+    protected function getCustomTag(string $name)
+    {
+        $tag = Extension::getInstance('Tag');
+
+        return $tag->getClassName($name) . "::main";
+    }
+
+    /**
+     * Generate operation "Filter"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationFilter(array $structure, &$body)
+    {
+        $this->obStart($body);
+
+        $this->generateOperationCode($structure['body'], $body);
+
+        $target = BH::hvar('buffer_' . $this->obstartNum);
+
+        foreach ($structure['functions'] as $item)
+        {
+            $param = (isset($exec) ? $exec : $target);
+            $exec  = $this->doFiltering($item, [$param]);
+        }
+
+        $this->obstartNum--;
+
+        $this->doPrint($body, $exec);
+    }
+
+    /**
+     * Get custom filter
+     *
+     * @param  string $name Filter name
+     *
+     * @return string Calling Class::method
+     */
+    protected function getCustomFilter(string $name)
+    {
+        $filter = Extension::getInstance('Filter');
+
+        return $filter->getClassName($name) . "::main";
     }
 
     /**
@@ -1293,6 +1378,85 @@ class Compiler
     protected function varFilter(array $cmd)
     {
         return isset($cmd['var_filter']);
+    }
+
+    /**
+     * Check the current expr
+     *
+     * @param  array &$expr
+     *
+     * @return void
+     */
+    protected function checkExpr(array &$expr)
+    {
+        if (AST::isExpr($expr))
+        {
+            if ($expr['op_expr'] == 'in')
+            {
+                for ($id=0; $id<2; $id++)
+                {
+                    if ($this->varFilter($expr[$id]))
+                    {
+                        $expr[$id] = $this->getFilteredVar($expr[$id]['var_filter']);
+                    }
+                }
+
+                if (AST::isStr($expr[1]))
+                {
+                    $expr = BH::hexpr(
+                        BH::hexec(
+                            'strpos',
+                            $expr[1],
+                            $expr[0]
+                        ),
+                        '!==',
+                        false
+                    );
+                }
+                else
+                {
+                    $expr = BH::hexpr(
+                        BH::hexpr_cond(
+                            BH::hexec('is_array', $expr[1]),
+                            BH::hexec('array_search', $expr[0], $expr[1]),
+                            BH::hexec('strpos', $expr[1], $expr[0])
+                        ),
+                        '!==',
+                        false
+                    );
+                }
+            }
+
+            if (is_object($expr))
+            {
+                $expr = $expr->getArray();
+            }
+
+            $this->checkExpr($expr[0]);
+            $this->checkExpr($expr[1]);
+
+        }
+        elseif (is_array($expr))
+        {
+            if ($this->varFilter($expr))
+            {
+                $expr = $this->getFilteredVar($expr['var_filter']);
+            }
+            elseif (isset($expr['args']))
+            {
+                foreach ($expr['args'] as &$v)
+                {
+                    $this->checkExpr($v);
+                }
+                unset($v);
+            }
+            else if (isset($expr['expr_cond']))
+            {
+                $this->checkExpr($expr['expr_cond']);
+                $this->checkExpr($expr['true']);
+                $this->checkExpr($expr['false']);
+            }
+        }
     }
 
     /**
