@@ -14,6 +14,13 @@ use placer\brio\engine\helper\BH;
 class Compiler
 {
     /**
+     * Parent block super placeholder
+     *
+     * @var string
+     */
+    const BLOCK_VAR = 'block_super';
+
+    /**
      * Compiler instance
      *
      * @var placer\brio\engine\Compiler
@@ -119,13 +126,6 @@ class Compiler
     protected $safes = [];
 
     /**
-     * Block placeholder
-     *
-     * @var string
-     */
-    protected $blockVar;
-
-    /**
      * Flag the current variable as safe
      *
      * @var boolean
@@ -147,8 +147,6 @@ class Compiler
     function __construct()
     {
         $this->generator = new PhpGenerator;
-
-        $this->blockVar = 'block_' . uniqid();
     }
 
     /**
@@ -222,7 +220,7 @@ class Compiler
 
         foreach ($varKeys as $key)
         {
-            if ($key != 'generator' && $key != 'blockVar')
+            if ($key != 'generator')
             {
                 $this->$key = null;
             }
@@ -503,7 +501,7 @@ class Compiler
                     throw new CompilerException("Only subtemplates can call block.super");
                 }
                 $this->safeVariable = true;
-                return AST::str($this->blockVar);
+                return AST::str(self::BLOCK_VAR);
                 break;
             default:
                 if ($special)
@@ -701,9 +699,9 @@ class Compiler
         $declare = BH::hexpr_cond(
             BH::hexec('isset', $blockName),
             BH::hexpr_cond(
-                BH::hexpr(BH::hexec('strpos', $blockName, $this->blockVar), '===', false),
+                BH::hexpr(BH::hexec('strpos', $blockName, self::BLOCK_VAR), '===', false),
                 $blockName,
-                BH::hexec('str_replace', $this->blockVar, $buffer, $blockName)
+                BH::hexec('str_replace', self::BLOCK_VAR, $buffer, $blockName)
             ),
             $buffer
         );
@@ -935,6 +933,137 @@ class Compiler
     }
 
     /**
+     * Generate operation "Loop"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationIfchanged(array $structure, &$body)
+    {
+        static $ifchanged = 0;
+
+        $ifchanged++;
+
+        $varChanged = 'ifchanged' . $ifchanged;
+
+        if (! isset($structure['check']))
+        {
+            $this->obStart($body);
+
+            $varBuffer = BH::hvar('buffer_' . $this->obstartNum);
+
+            $this->generateOperationCode($structure['body'], $body);
+
+            $this->obstartNum--;
+
+            $body->doIf(BH::hexpr(
+                BH::hexec('isset', BH::hvar($varChanged)),
+                '==', false, '||', BH::hvar($varChanged),
+                '!=', $varBuffer
+            ));
+
+            $this->doPrint($body, $varBuffer);
+
+            $body->decl($varChanged, $varBuffer);
+        }
+        else
+        {
+            foreach ($structure['check'] as $id => $type)
+            {
+                if (! AST::isVar($type))
+                {
+                    throw new CompilerException("Unexpected string {$type['string']}, expected a varabile");
+                }
+
+                $thisExpr = BH::hexpr(BH::hexpr(
+                    BH::hexec('isset', BH::hvar($varChanged, $id)), '==', false,'||',
+                    BH::hvar($varChanged, $id), '!=', $type
+                ));
+
+                if (isset($expr))
+                {
+                    $thisExpr = BH::hexpr($expr, '||', $thisExpr);
+                }
+
+                $expr = $thisExpr;
+            }
+
+            $body->doIf($expr);
+
+            $this->generateOperationCode($structure['body'], $body);
+
+            $body->decl($varChanged, $structure['check']);
+        }
+
+        if (isset($structure['else']))
+        {
+            $body->doElse();
+            $this->generateOperationCode($structure['else'], $body);
+        }
+
+        $body->doEndif();
+    }
+
+    /**
+     * Generate operation "Autoescape"
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    function generateOperationAutoescape(array $structure, &$body)
+    {
+        $autoescape = static::$autoescape;
+
+        static::$autoescape = strtolower($structure['value']) == 'on';
+
+        $this->generateOperationCode($structure['body'], $body);
+
+        static::$autoescape = $autoescape;
+    }
+
+    /**
+     * Generate operation "Spacefull"
+     * Set the stripWhitespace compiler option to off
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    function generateOperationSpacefull(array $structure, &$body)
+    {
+        $stripWhitespace = static::$stripWhitespace;
+
+        static::$stripWhitespace = false;
+
+        $this->generateOperationCode($structure['body'], $body);
+
+        static::$stripWhitespace = $stripWhitespace;
+    }
+
+    /**
+     * Generate operation "Alias"
+     * With <variable> as <var>
+     *
+     * @param  array $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    function generateOperationAlias(array $structure, &$body)
+    {
+        $this->varAliases[$structure['as']] = $this->generateVariableName($structure['var']);
+
+        $this->generateOperationCode($structure['body'], $body);
+
+        unset($this->varAliases[$structure['as']]);
+    }
+
+    /**
      * Handle HTML code
      *
      * @param  array $structure
@@ -1052,6 +1181,57 @@ class Compiler
     }
 
     /**
+     * Do filtering
+     *
+     * @param  string|array $name
+     * @param  array $args
+     *
+     * @return object AST
+     */
+    protected function doFiltering($name, array $args)
+    {
+        static $filter;
+
+        if (! $filter)
+        {
+            $filter = Extension::getInstance('Filter');
+        }
+
+        if (is_array($name))
+        {
+            $args = array_merge($args, $name['args']);
+
+            $name = $name[0];
+        }
+
+        if (! $filter->isValid($name))
+        {
+            throw new CompilerException("{$name} is an invalid filter");
+        }
+
+        if ($filter->isSafe($name))
+        {
+            $this->safeVariable = true;
+        }
+
+        if ($filter->hasGenerator($name))
+        {
+            return $filter->generator($name, $this, $args);
+        }
+
+        if (! $fnc = $filter->getFunctionAlias($name))
+        {
+            $fnc = $this->getCustomFilter($name);
+        }
+
+        $args = array_merge([$fnc], $args);
+
+        $exec = call_user_func_array(['placer\brio\engine\helper\BH', 'hexec'], $args);
+
+        return $exec;
+    }
+
+    /**
      *  Handles all the filtered variables output in the parser
      *
      *  @param array $vars
@@ -1154,6 +1334,76 @@ class Compiler
         }
 
         return $default === null ? static::$dotObject : $default;
+    }
+
+    /**
+     * Set variable to safe
+     *
+     * @param string $name Var name
+     *
+     * @return  void
+     */
+    public function setSafe(string $name)
+    {
+        if (! AST::isVar($name))
+        {
+            $name = BH::hvar($name)->getArray();
+        }
+
+        $this->safes[serialize($name)] = true;
+    }
+
+    /**
+     * Set variable to unsafe
+     *
+     * @param string $name Var name
+     *
+     * @return  viod
+     */
+    protected function setUnsafe(string $name)
+    {
+        if (! AST::isVar($name))
+        {
+            $name = BH::hvar($name)->getArray();
+        }
+
+        unset($this->safes[serialize($name)]);
+    }
+
+    /**
+     * Check if variable is safe
+     *
+     * @param  object|array  $name Variable
+     *
+     * @return boolean
+     */
+    protected function isSafe($name)
+    {
+        if ($this->safeVariable)
+        {
+            return true;
+        }
+
+        if (isset($this->safes[serialize($name)]))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Start a new buffering
+     *
+     * @param  object &$body AST
+     *
+     * @return void
+     */
+    protected function obStart(AST &$body)
+    {
+        $this->obstartNum++;
+
+        $body->decl('buffer_' . $this->obstartNum, '');
     }
 
     /**
