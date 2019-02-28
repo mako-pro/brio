@@ -1,10 +1,9 @@
 <?php
 
-return
-[
+return [
 
 	'viewDir' => MAKO_APPLICATION_PATH . '/resources/views',
 
-	'caheDir' => MAKO_APPLICATION_PATH . '/storage/views',
+	'caheDir' => MAKO_APPLICATION_PATH . '/storage/cache/brio',
 
 ];

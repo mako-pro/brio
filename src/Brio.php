@@ -70,14 +70,12 @@ class Brio
      */
     public static function load(string $view, array $vars = [], $return = false, $blocks = [])
     {
-        $caheDir = static::$caheDir;
-
-        if (empty($caheDir))
+        if (empty(static::$caheDir))
         {
-            throw new BrioException('Cache view directory isn`t defined [ "brio::config.caheDir" ]');
+            throw new BrioException("Cache view directory isn`t defined [ brio::config.caheDir ]");
         }
 
-        if (! is_file($view))
+        if (! realpath($view))
         {
             $view = static::getTemplatePath($view);
         }
@@ -86,9 +84,9 @@ class Brio
 
         $callback = "brio_" . $pathHash;
 
-        $cacheFile = $caheDir . DIRECTORY_SEPARATOR . $pathHash . '.php';
+        $cacheFile = static::$caheDir . DIRECTORY_SEPARATOR . $pathHash . '.php';
 
-        if (is_file($cacheFile) && (filemtime($view) <= filemtime($cacheFile)))
+        if (file_exists($cacheFile) && (filemtime($view) <= filemtime($cacheFile)))
         {
             require $cacheFile;
 
@@ -158,11 +156,9 @@ class Brio
      */
     public static function getTemplatePath($file)
     {
-        $viewDir = static::$viewDir;
-
-        if (empty($viewDir))
+        if (empty(static::$viewDir))
         {
-            throw new BrioException('Views directory isn`t defined [ "brio::config.viewDir" ]');
+            throw new BrioException("Views directory isn`t defined [ brio::config.viewDir ]");
         }
 
         if (strpos($file, '::') !== false)
@@ -171,19 +167,19 @@ class Brio
 
             $subPath = 'vendor' . DIRECTORY_SEPARATOR . 'placer' . DIRECTORY_SEPARATOR . $package;
 
-            $viewDir = str_replace('app', $subPath, $viewDir);
+            $viewDir = str_replace('app', $subPath, static::$viewDir);
         }
 
         $file = str_replace('.', DIRECTORY_SEPARATOR, $file) . static::EXT;
 
         $filePath = $viewDir . DIRECTORY_SEPARATOR . $file;
 
-        if (is_file($filePath))
+        if ($filePath = realpath($filePath))
         {
-            return realpath($filePath);
+            return $filePath;
         }
 
-        throw new BrioException(vsprintf('Cannot find view file [ %s ]', [$filePath]));
+        throw new BrioException("Cannot find view file [ $filePath ]");
     }
 
     /**
@@ -203,14 +199,14 @@ class Brio
 
             if (! @mkdir($directory, 0777, true))
             {
-                throw new BrioException(vsprintf('Failed to create cache directory [ %s ]', [$directory]));
+                throw new BrioException("Failed to create cache directory [ $directory ]");
             }
             umask($old);
         }
 
         if (! is_writable($directory))
         {
-            throw new BrioException(vsprintf('Cache directory [ %s ] not writable!', [$directory]));
+            throw new BrioException("Cache directory [ $directory ] not writable!");
         }
     }
 

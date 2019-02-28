@@ -25,7 +25,7 @@ class BrioPackage extends Package
      */
     protected function bootstrap()
     {
-        $this->container->get('view')->extend('.html.twig', function()
+        $this->container->get('view')->extend('.html.twig', function ()
         {
             $config = $this->container->get('config');
 
