@@ -104,9 +104,9 @@ abstract class Extension
         $className = $this->getClassName($name);
         $properties = get_class_vars($className);
 
-        if (isset($properties['php_alias']))
+        if (isset($properties['phpAlias']))
         {
-            return $properties['php_alias'];
+            return $properties['phpAlias'];
         }
         return null;
     }
@@ -127,7 +127,7 @@ abstract class Extension
         $className  = $this->getClassName($name);
         $properties = get_class_vars($className);
 
-        return isset($properties['is_safe']) ? $properties['is_safe'] : false;
+        return isset($properties['isSafe']) ? $properties['isSafe'] : false;
     }
 
     /**

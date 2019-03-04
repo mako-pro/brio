@@ -23,9 +23,9 @@ class Tag extends Extension
 
                 $isBlock = false;
 
-                if (isset($properties['is_block']))
+                if (isset($properties['isBlock']))
                 {
-                    $isBlock = (bool)$properties['is_block'];
+                    $isBlock = (bool)$properties['isBlock'];
                 }
 
                 $cache[$tag] = $isBlock ? Parser::T_CUSTOM_BLOCK : Parser::T_CUSTOM_TAG;

@@ -713,9 +713,9 @@ class Compiler
 
         $buffer = BH::hvar($bufferVar);
 
-        $declare = BH::hexpr_cond(
+        $declare = BH::hexprCond(
             BH::hexec('isset', $blockName),
-            BH::hexpr_cond(
+            BH::hexprCond(
                 BH::hexpr(BH::hexec('strpos', $blockName, self::BLOCK_VAR), '===', false),
                 $blockName,
                 BH::hexec('str_replace', self::BLOCK_VAR, $buffer, $blockName)
@@ -815,7 +815,7 @@ class Compiler
         {
             if (! isset($cnt))
             {
-                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvarEx($structure['array'])));
                 $cnt = true;
             }
 
@@ -835,7 +835,7 @@ class Compiler
         {
             if (! isset($cnt))
             {
-                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvarEx($structure['array'])));
                 $cnt = true;
             }
 
@@ -848,7 +848,7 @@ class Compiler
         {
             if (! isset($cnt))
             {
-                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvar_ex($structure['array'])));
+                $body->decl('psize_' . $forID, BH::hexec('count', BH::hvarEx($structure['array'])));
                 $cnt = true;
             }
 
@@ -1433,7 +1433,7 @@ class Compiler
                 else
                 {
                     $expr = BH::hexpr(
-                        BH::hexpr_cond(
+                        BH::hexprCond(
                             BH::hexec('is_array', $expr[1]),
                             BH::hexec('array_search', $expr[0], $expr[1]),
                             BH::hexec('strpos', $expr[1], $expr[0])
