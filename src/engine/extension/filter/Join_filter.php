@@ -6,7 +6,7 @@ use placer\brio\engine\helper\BH;
 
 class Join_filter
 {
-    public public static function generator($compiler, $args)
+    public static function generator($compiler, $args)
     {
         if (count($args) == 1)
         {
