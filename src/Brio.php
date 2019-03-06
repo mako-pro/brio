@@ -161,20 +161,20 @@ class Brio
             throw new BrioException("Views directory isn`t defined [ brio::config.viewDir ]");
         }
 
-		$viewDir = static::$viewDir;
-		
+        $viewDir = static::$viewDir;
+
         if (strpos($file, '::') !== false)
         {
             list($package, $file) = explode('::', $file);
 
-            $subPath = 'vendor' . DIRECTORY_SEPARATOR . 'packages' . DIRECTORY_SEPARATOR . $package;
+            $subPath = 'vendor/packages/' . $package;
 
             $viewDir = str_replace('app', $subPath, $viewDir);
         }
 
-        $file = str_replace('.', DIRECTORY_SEPARATOR, $file) . static::EXT;
+        $file = str_replace('.', '/', $file) . static::EXT;
 
-        $filePath = $viewDir . DIRECTORY_SEPARATOR . $file;
+        $filePath = $viewDir . '/' . $file;
 
         if ($filePath = realpath($filePath))
         {

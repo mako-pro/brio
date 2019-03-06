@@ -27,7 +27,7 @@ class BrioPackage extends Package
     {
         $this->container->get('view')->extend('.html.twig', function ()
         {
-            $config = $this->container->get('config');  
+            $config = $this->container->get('config');
 
             $brio = new Brio($config->get('brio::config'));
 
