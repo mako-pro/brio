@@ -1,0 +1,8 @@
+<span class="preform">
+    {% for i in text|explode %}
+        char: {{ i }}
+    {% endfor %}
+    {% for i in text|explode:"," %}
+        word: {{ i }}
+    {% endfor %}
+</span>

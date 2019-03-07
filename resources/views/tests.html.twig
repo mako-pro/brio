@@ -1,0 +1,12 @@
+{% extends 'brio::layout.main' %}
+
+{% block title %}{{ block.super }} | {{ title | default: 'Index' }}{% endblock %}
+
+{% block content %}
+    <div class="wrapper">
+        <h2>{{ title }}</h2>
+        {% set partial = "brio::stubs." . stub %}
+        <p><b>Template path:</b> packages/brio/resources/views/stubs/{{ stub }}.html.twig</p>
+        {% include partial %}
+    </div>
+{% endblock %}

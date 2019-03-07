@@ -1,0 +1,6 @@
+<ul class="top-nav">
+    <li><b>Stubs:</b></li>
+    {% for slug,title in pages %}
+        <li><a href="/tests/{{ slug }}">{{ title }}</a></li>
+    {% endfor %}
+</ul>

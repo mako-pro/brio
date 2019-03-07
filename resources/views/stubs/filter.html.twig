@@ -1,0 +1,14 @@
+<span class="preform">
+    {{ var|default:"foobar" }}
+    {{ var|upper }}
+    {{ var|upper|lower }}
+    {{ var|cut:"u" }}
+    {{ var|length }}
+    {% upper %}
+        mast be upper case
+    {% endupper %}
+    {% lower %}Mast Be Lower Case{% endlower %}
+    {% filter upper|lower|cut:"!" %}
+        Hello World!
+    {% endfilter %}
+</span>
