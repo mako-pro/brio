@@ -1404,8 +1404,8 @@ class Compiler
      *
      * @return void
      */
-    protected function checkExpr(array &$expr)
-    {
+    protected function checkExpr(&$expr)
+    {                                        
         if (AST::isExpr($expr))
         {
             if ($expr['op_expr'] == 'in')
