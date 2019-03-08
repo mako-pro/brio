@@ -1405,7 +1405,7 @@ class Compiler
      * @return void
      */
     protected function checkExpr(&$expr)
-    {                                        
+    {
         if (AST::isExpr($expr))
         {
             if ($expr['op_expr'] == 'in')
@@ -1520,11 +1520,11 @@ class Compiler
     /**
      * Set variable to unsafe
      *
-     * @param string $name Var name
+     * @param  object  $name \placer\brio\engine\helper\AST
      *
      * @return  viod
      */
-    protected function setUnsafe(string $name)
+    protected function setUnsafe($name)
     {
         if (! AST::isVar($name))
         {

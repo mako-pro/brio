@@ -78,14 +78,19 @@ class TestsController extends Controller
 				return ['text' => 'foo,bar'];
 			case 'expr':
 				return ['user' => [
-				        'status'  => 'active',
-				        'pending' => true,
-				        'banned'  => false,
+			        'status'  => 'active',
+			        'pending' => true,
+			        'banned'  => false,
 			    	],
 			    ];
 			case 'filter':
 				return ['var' => '"value"'];
-
+			case 'for_range_minimax':
+				return ['e' => [
+					'min' => 5,
+					'max' => 1,
+					],
+				];
 
 
 
