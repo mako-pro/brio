@@ -91,8 +91,25 @@ class TestsController extends Controller
 					'max' => 1,
 					],
 				];
-
-
+			case 'foreach':
+				return  ['categories' => [
+						[
+							'category' => ['name' => 'First Category'],
+							'subcategories' => [
+								['name' => 'First subcategory'],
+								['name' => 'Second subcategory'],
+								['name' => 'Last subcategory'],
+							],
+						],
+						[
+							'category' => ['name' => 'Second Category'],
+							'subcategories' => [
+								['name' => 'First subcategory'],
+								['name' => 'Last subcategory'],
+							],
+						],
+					],
+				];
 
 			default:
 				return ['' => ''];

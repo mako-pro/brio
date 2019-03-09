@@ -428,11 +428,11 @@ class Compiler
     /**
      * Set variable to safe
      *
-     * @param string $name Var name
+     * @param  object $name \placer\brio\engine\helper\AST
      *
      * @return  void
      */
-    public function setSafe(string $name)
+    public function setSafe($name)
     {
         if (! AST::isVar($name))
         {
