@@ -2431,17 +2431,20 @@ class Parser
 
     protected function yyAccept()
     {
-        if (self::$yyTraceFile) {
+        if (self::$yyTraceFile)
+        {
             fprintf(self::$yyTraceFile, "%sAccept!\n", self::$yyTracePrompt);
         }
-        while ($this->yyidx >= 0) {
+
+        while ($this->yyidx >= 0)
+        {
             $stack = $this->yyPopParserStack();
         }
     }
 
     protected function error($text)
     {
-        throw new BrioException($text.' in '.$this->compiler->getTemplateFile().':'.$this->lex->getLine());
+        throw new BrioException($text . " in " . $this->compiler->getTemplateFile() . ":" . $this->lex->getLine());
     }
 
 }

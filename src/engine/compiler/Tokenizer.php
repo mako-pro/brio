@@ -580,7 +580,7 @@ class Tokenizer
 
     private function error(string $text)
     {
-        throw new BrioException($text." in ".$this->compiler->getTemplateFile().":".$this->line);
+        throw new BrioException($text . " in " . $this->compiler->getTemplateFile() . ":" . $this->line);
     }
 
 }

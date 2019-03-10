@@ -92,24 +92,46 @@ class TestsController extends Controller
 					],
 				];
 			case 'foreach':
-				return  ['categories' => [
-						[
-							'category' => ['name' => 'First Category'],
-							'subcategories' => [
-								['name' => 'First subcategory'],
-								['name' => 'Second subcategory'],
-								['name' => 'Last subcategory'],
-							],
-						],
-						[
-							'category' => ['name' => 'Second Category'],
-							'subcategories' => [
-								['name' => 'First subcategory'],
-								['name' => 'Last subcategory'],
-							],
+				return ['categories' => [
+					[
+						'category' => ['name' => 'First Category'],
+						'subcategories' => [
+							['name' => 'First subcategory'],
+							['name' => 'Second subcategory'],
+							['name' => 'Last subcategory'],
 						],
 					],
-				];
+					[
+						'category' => ['name' => 'Second Category'],
+						'subcategories' => [
+							['name' => 'First subcategory'],
+							['name' => 'Last subcategory'],
+						],
+					],
+				]];
+			case 'ifchanged':
+				return ['users' => [
+				    [
+				        'name' => 'Mike',
+				        'age'  => 22,
+				        'foo'  => 2,
+				    ],
+				    [
+				        'name' => 'older Mike',
+				        'age'  => 25,
+				        'foo'  => 2,
+				    ],
+				    [
+				        'name' => 'John',
+				        'age'  => 22,
+				        'foo'  => 1,
+				    ],
+					[
+						'name' => 'older John',
+						'age'  => 25,
+						'foo'  => 2,
+					]
+				]];
 
 			default:
 				return ['' => ''];

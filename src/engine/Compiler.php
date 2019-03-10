@@ -84,6 +84,13 @@ class Compiler
     protected $templateFile;
 
     /**
+     * Template line number
+     *
+     * @var integer
+     */
+    protected $templateLine = 0;
+
+    /**
      * Number of blocks
      *
      * @var integer
@@ -360,6 +367,7 @@ class Compiler
      */
     public function compileFile(string $file, $safe = false, $context = [])
     {
+        $this->templateLine  = 0;
         $this->templateFile  = $file;
         $this->checkFunction = $safe;
         $this->context       = $context;
@@ -614,6 +622,11 @@ class Compiler
             if (! isset($structure['operation']))
             {
                 throw new CompilerException("Invalid parsed data: " . print_r($structure, true));
+            }
+
+            if (isset($structure['line']))
+            {
+                $this->templateLine = $structure['line'];
             }
 
             if ($this->baseTemplate && $this->numBlocks == 0 && $structure['operation'] != 'block')
@@ -1637,6 +1650,18 @@ class Compiler
         }
 
         return $output;
+    }
+
+    /**
+     * Output error message
+     *
+     * @param  string $text
+     *
+     * @return BrioException
+     */
+    public function error(string $text)
+    {
+        throw new BrioException($text . " in " . $this->templateFile . ":" . $this->templateLine);
     }
 
 }
