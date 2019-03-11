@@ -1,0 +1,14 @@
+<span class="preform">
+    {% if "de" in "Le Vicomte de Bragelonne" %}
+        Found1...
+    {% endif %}
+    {% if "De" in data.names %}
+        Found2...
+    {% endif %}
+    {% if data.search in "Le Vicomte de Bragelonne" %}
+        Found3...
+    {% endif %}
+    {% if data.search in data.names %}
+        Found4...
+    {% endif %}
+</span>

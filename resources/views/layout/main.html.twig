@@ -16,7 +16,7 @@
 				border-bottom: 1px dotted #01483B;
 				padding: 3px;
 			}
-			a:hover {
+			a:hover, .active {
 				color: #017A65;
 				background: #E1E1E1;
 				border: none;
@@ -62,5 +62,11 @@
 		{% block content %}
 			Default content...
 		{% endblock content %}
+		<script>
+		    window.onload = function() {
+			    var curr = (window.location.href).split("/");
+				document.getElementById(curr[4]).classList.add('active');
+		    }
+		</script>
 	</body>
 </html>

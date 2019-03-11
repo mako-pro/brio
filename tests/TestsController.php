@@ -132,6 +132,11 @@ class TestsController extends Controller
 						'foo'  => 2,
 					]
 				]];
+			case 'if_in':
+				return [ 'data' => [
+					'names'  => ['Vicomte', 'Bragelonne'],
+    				'search' => 'Bragelonne',
+    			]];
 
 			default:
 				return ['' => ''];

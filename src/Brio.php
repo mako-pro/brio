@@ -176,9 +176,9 @@ class Brio
 
         $filePath = $viewDir . '/' . $file;
 
-        if ($filePath = realpath($filePath))
+        if ($realPath = realpath($filePath))
         {
-            return $filePath;
+            return $realPath;
         }
 
         throw new BrioException("Cannot find view file [ $filePath ]");
