@@ -2,13 +2,34 @@
 
 namespace placer\brio\tests;
 
-class TestsStatic
+/**
+ * "config/application.php":
+ *
+ * 'class_aliases' =>
+ * [
+ *      'TestStaticClass' => '\placer\brio\tests\TestStaticClass',
+ * ],
+ */
+
+class  TestStaticClass
 {
     /**
      * Static data
      * @var array
      */
     public static $fooBar = ['foo','bar'];
+
+    /**
+     * Bar property
+     * @var string
+     */
+    public $bar = 'PublicBar';
+
+    /**
+     * Foo property
+     * @var string
+     */
+    protected $foo = 'ProtectedFoo';
 
     /**
      * Get Data
@@ -21,6 +42,15 @@ class TestsStatic
             return $data;
 
         return 'Not Found!';
+    }
+
+    /**
+     * Get Foo
+     * @return string
+     */
+    public function getFoo(): string
+    {
+        return $this->foo;
     }
 
     /**

@@ -1,0 +1,9 @@
+<span class="preform">
+    {% for value in data.obj %}
+        {{ forloop.counter }} - {{ value }}
+    {% endfor %}
+    |
+    {% for item in data.objArr %}
+        {{ item.bar }} - from objects array
+    {% endfor %}
+</span>

@@ -152,13 +152,21 @@ class TestsController extends Controller
 			case 'loop':
 				return ['data' => [
 					'items'  => range(1, 4),
-    				'nested' => [
-				        [range(1, 4),  range(1, 20)],
-				        [range(1, 10), range(1, 90)],
-				        [range(1, 20), range(1, 1000)],
-				        [range(2, 7),  range(8, 15)],
+					'nested' => [
+						[range(1, 4),  range(1, 20)],
+						[range(1, 10), range(1, 90)],
+						[range(1, 20), range(1, 1000)],
+						[range(2, 7),  range(8, 15)],
 					],
 				]];
+			case 'loop_object':
+				$obj = new \stdClass;
+				$obj->foo = 'FooProperty';
+				$obj->bar = 'BarProperty';
+				$objArr = [$obj];
+				return ['data' => compact('obj', 'objArr')];
+			case 'methods':
+				return ['Object' => new \placer\brio\tests\TestStaticClass];
 
 			default:
 				return ['' => ''];
