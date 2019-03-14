@@ -1305,12 +1305,7 @@ class Compiler
      */
     protected function doFiltering($name, array $args)
     {
-        static $filter;
-
-        if (! $filter)
-        {
-            $filter = Extension::getInstance('Filter');
-        }
+        $filter = Extension::getInstance('Filter');
 
         if (is_array($name))
         {
@@ -1360,7 +1355,7 @@ class Compiler
 
         if (($count = count($vars)) > 1)
         {
-;           if (AST::isExec($vars[0]) || ($vars[0][0] === 'block' && isset($vars[0]['string'])))
+            if (AST::isExec($vars[0]) || ($vars[0][0] === 'block' && isset($vars[0]['string'])))
             {
                 $target = $vars[0];
             }
@@ -1378,9 +1373,12 @@ class Compiler
                     $this->safeVariable = true;
                 }
 
-                $exec = $this->doFiltering($fName, [$target]);
+                $args = [isset($exec) ? $exec : $target];
+                $exec = $this->doFiltering($fName, $args);
             }
 
+            unset($vars);
+            $varname = $args[0];
             $returns = $exec;
         }
         else

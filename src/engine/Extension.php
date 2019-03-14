@@ -139,7 +139,7 @@ abstract class Extension
      * @param mixed   $extra  Extra params
      * @return array
      */
-    public function generator(string $name, Compiler $compiler, array $args, $extra=null)
+    public function generator(string $name, Compiler $compiler, array $args, $extra = null)
     {
         if (! $this->hasGenerator($name))
         {

@@ -1,0 +1,10 @@
+<span class="preform">
+    {% buffer html %}
+        Content before +
+        {% inline "brio::stubs._partial" %}
+        {% inline "brio::stubs._buffer" %}
+    {% endbuffer %}
+    Start:
+    {{ html }}
+    End.
+</span>

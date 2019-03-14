@@ -175,7 +175,7 @@ class PHP
      */
     protected function phpIf(array $op)
     {
-        $str  = "if (".$this->phpGenerateExpr($op['expr']).") {";
+        $str  = "if (" . $this->phpGenerateExpr($op['expr']) . ") {";
         $this->ident++;
         return $str;
     }
@@ -188,7 +188,7 @@ class PHP
     protected function phpElse()
     {
         $this->ident--;
-        $code = $this->getIdent()."} else {";
+        $code = $this->getIdent() . "} else {";
         $this->ident++;
         return $code;
     }
@@ -211,7 +211,7 @@ class PHP
      */
     protected function phpExpr(array $op)
     {
-        return $this->phpGenerateExpr($op[0]).";";
+        return $this->phpGenerateExpr($op[0]) . ";";
     }
 
     /**
@@ -224,7 +224,7 @@ class PHP
     protected function phpDeclare(array $op, $assign = '=')
     {
         $op['name'] = $this->phpGetVarname($op['name']);
-        $str = "{$op['name']} {$assign} ".$this->phpGenerateStmt($op).";";
+        $str = "{$op['name']} {$assign} " . $this->phpGenerateStmt($op) . ";";  
         return $str;
     }
 
@@ -259,7 +259,7 @@ class PHP
         else
         {
             $op['key'] = $this->phpGetVarname($op['key']);
-            $str     .= " {$op['key']} => {$op['value']}";
+            $str .= " {$op['key']} => {$op['value']}";
         }
 
         $str .= ") {";
@@ -338,7 +338,7 @@ class PHP
     protected function phpEndBlock()
     {
         $this->ident--;
-        return $this->getIdent()."}";
+        return $this->getIdent() . "}";
     }
 
     /**
@@ -390,7 +390,7 @@ class PHP
      */
     protected function phpGlobal(array $op)
     {
-        return "global \$".implode(", \$", $op['vars']).";";
+        return "global \$" . implode(", \$", $op['vars']) . ";";
     }
 
     /**
@@ -418,7 +418,7 @@ class PHP
             }
             else if ($expr['op_expr'] == 'not')
             {
-                $str .= "!".$this->phpGenerateExpr($expr[0]);
+                $str .= "!" . $this->phpGenerateExpr($expr[0]);
             }
             else
             {
@@ -426,7 +426,8 @@ class PHP
 
                 if (is_object($expr['op_expr']))
                 {
-                    var_dump($expr);die('unexpected error');
+                    var_dump($expr);
+                    die('unexpected error');
                 }
                 $str .= " {$expr['op_expr']} ";
                 $str .= $this->phpGenerateExpr($expr[1]);
@@ -492,7 +493,7 @@ class PHP
 
             if (! is_array($op[$i]))
             {
-                throw new Exception("Malformed declaration ".print_r($op, true));
+                throw new Exception("Malformed declaration " . print_r($op, true));
             }
 
             $key   = key($op[$i]);
@@ -515,7 +516,7 @@ class PHP
                     $str .= $concat;
                     break;
                 case 'key':
-                    $str .= $this->phpGenerateStmt([$value[0]])." => ".$this->phpGenerateStmt([$value[1]]);
+                    $str .= $this->phpGenerateStmt([$value[0]]) . " => " . $this->phpGenerateStmt([$value[1]]);
                     break;
                 case 'string':
                     if ($str != "" && $str[strlen($str)-1] == "'") {
@@ -524,7 +525,7 @@ class PHP
                         $str .= "'";
                     }
                     $html = $this->addslashesEx($value);
-                    $str .= $html."'";
+                    $str .= $html . "'";
                     break;
                 case 'var':
                     if (strlen($str) != 0 && $str[strlen($str) -1] != $concat) {
@@ -568,7 +569,7 @@ class PHP
                     $str = $value;
                     break;
                 default:
-                    throw new Exception("Don't know how to declare {$key} = {$value} (".print_r($op, true));
+                    throw new Exception("Don't know how to declare {$key} = {$value} (" . print_r($op, true));
             }
         }
 
@@ -593,7 +594,7 @@ class PHP
         {
             return;
         }
-        return 'echo '.$output.';';
+        return 'echo ' . $output . ';';
     }
 
     /**
@@ -604,7 +605,7 @@ class PHP
      */
     protected function phpInc(array $op)
     {
-        return "++".$this->phpGetVarname($op['name']);
+        return "++" . $this->phpGetVarname($op['name']);
     }
 
     /**
@@ -625,7 +626,7 @@ class PHP
                 }
                 else
                 {
-                    throw new Exception("Invalid variable definition ".print_r($var, true));
+                    throw new Exception("Invalid variable definition " . print_r($var, true));
                 }
             }
 
@@ -635,31 +636,31 @@ class PHP
             {
                 if (is_string($var[$i]))
                 {
-                    $varName .= "['".$this->addslashesEx($var[$i])."']";
+                    $varName .= "['" . $this->addslashesEx($var[$i]) . "']";
                 }
                 else if (is_array($var[$i]))
                 {
                     if (isset($var[$i]['var']))
                     {
-                        $varName .= '['.$this->phpGetVarname($var[$i]['var']).']';
+                        $varName .= '[' . $this->phpGetVarname($var[$i]['var']) . ']';
                     }
                     elseif (isset($var[$i]['string']))
                     {
-                        $varName .= "['".$this->addslashesEx($var[$i]['string'])."']";
+                        $varName .= "['" . $this->addslashesEx($var[$i]['string']) . "']";
                     }
                     elseif (isset($var[$i]['number']))
                     {
-                        $varName .= '['.$var[$i]['number'].']';
+                        $varName .= '[' . $var[$i]['number'] . ']';
                     }
                     elseif (isset($var[$i]['object']))
                     {
                         if (is_array($var[$i]['object']))
                         {
-                            $varName .= '->{'.$this->phpGetVarname($var[$i]['object']['var']).'}';
+                            $varName .= '->{' . $this->phpGetVarname($var[$i]['object']['var']) . '}';
                         }
                         else
                         {
-                            $varName .= '->'.$var[$i]['object'];
+                            $varName .= '->' . $var[$i]['object'];
                         }
                     }
                     elseif (isset($var[$i]['class']))
@@ -668,11 +669,11 @@ class PHP
 
                         if (is_array($var[$i]['class']))
                         {
-                            $varName .= '::{'.$this->phpGetVarname($var[$i]['class']['var']).'}';
+                            $varName .= '::{' . $this->phpGetVarname($var[$i]['class']['var']) . '}';
                         }
                         else
                         {
-                            $varName .= '::'.$var[$i]['class'];
+                            $varName .= '::' . $var[$i]['class'];
                         }
                     }
                     elseif ($var[$i] === [])
@@ -681,7 +682,7 @@ class PHP
                     }
                     else
                     {
-                        throw new Exception('Unknown variable definition '.print_r($var, true));
+                        throw new Exception('Unknown variable definition ' . print_r($var, true));
                     }
                 }
             }
@@ -689,7 +690,7 @@ class PHP
         }
         else
         {
-            return "\$".$var;
+            return "\$" . $var;
         }
     }
 
@@ -701,7 +702,7 @@ class PHP
      */
     protected function phpReturn(array $op)
     {
-        $code = "return ".$this->phpGenerateStmt($op).";";
+        $code = "return " . $this->phpGenerateStmt($op) . ";";
         return $code;
     }
 
