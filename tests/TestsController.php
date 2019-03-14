@@ -135,20 +135,30 @@ class TestsController extends Controller
 			case 'if_in':
 				return [ 'data' => [
 					'names'  => ['Vicomte', 'Bragelonne'],
-    				'search' => 'Bragelonne',
-    			]];
-    		case 'intval':
-    			return ['data' => [
-    				'float5' => 5.01,
-    				'float6' => 6.99,
-    			]];
-    		case 'is_array':
-    			return ['data' => [
-    				'foo' => new \stdClass,
-    				'bar' => [],
+					'search' => 'Bragelonne',
+				]];
+			case 'intval':
+				return ['data' => [
+					'float5' => 5.01,
+					'float6' => 6.99,
+				]];
+			case 'is_array':
+				return ['data' => [
+					'foo' => new \stdClass,
+					'bar' => [],
 				]];
 			case 'join':
 				return ['words' => ['one', 'two', 'three']];
+			case 'loop':
+				return ['data' => [
+					'items'  => range(1, 4),
+    				'nested' => [
+				        [range(1, 4),  range(1, 20)],
+				        [range(1, 10), range(1, 90)],
+				        [range(1, 20), range(1, 1000)],
+				        [range(2, 7),  range(8, 15)],
+					],
+				]];
 
 			default:
 				return ['' => ''];
