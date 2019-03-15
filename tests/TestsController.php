@@ -167,6 +167,20 @@ class TestsController extends Controller
 				return ['data' => compact('obj', 'objArr')];
 			case 'methods':
 				return ['Object' => new \placer\brio\tests\TestStaticClass];
+			case 'if_null':
+				return ['data' => [
+					'arr' => [
+    					'foo'    => null,
+    					'bar'    => false,
+    					'foobar' => 0,
+    				],
+    			]];
+			case 'object':
+				$user = new \stdClass;
+				$user->name = 'John';
+				$user->nick['name'] = 'johnny';
+				$entities['user'] = $user;
+				return ['data' => compact('user', 'entities')];
 
 			default:
 				return ['' => ''];

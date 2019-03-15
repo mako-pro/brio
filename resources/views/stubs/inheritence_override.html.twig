@@ -1,0 +1,10 @@
+{% extends "brio::stubs.nested_block" %}
+
+<span class="preform">
+    {% block inner2 %}
+        | inner2's new content |
+        {% block inner2_1 %}
+            inner2_1's content
+        {% endblock %}
+    {% endblock %}
+</span>
