@@ -181,6 +181,38 @@ class TestsController extends Controller
 				$user->nick['name'] = 'johnny';
 				$entities['user'] = $user;
 				return ['data' => compact('user', 'entities')];
+			case 'pluralize':
+				return ['data' => [
+				    'single' => 1,
+				    'triple' => 3,
+				]];
+			case 'regroup':
+				return ['users' => [
+					[
+						'name' => 'foo',
+						'age'  => 21,
+					],
+					[
+						'name' => 'foobar',
+						'age'  => 22,
+					],
+					[
+						'name' => 'older Foo',
+						'age'  => 23,
+					],
+					[
+						'name' => 'older Bar',
+						'age'  => 23,
+					],
+					[
+						'name' => 'bar',
+						'age'  => 21,
+					],
+					[
+						'name' => 'older Foobar',
+						'age'  => 23,
+					],
+				]];
 
 			default:
 				return ['' => ''];

@@ -1282,6 +1282,48 @@ class Compiler
     }
 
     /**
+     * Generate operation "Regroup"
+     *
+     * @param  array  $structure
+     * @param  AST  &$body
+     *
+     * @return void
+     */
+    protected function generateOperationRegroup(array $structure, &$body)
+    {
+        $body->comment("Temporary sorting");
+
+        $vars  = $this->getFilteredVar($structure['array']);
+        $varAs = BH::hvar($structure['as']);
+        $varBy = BH::hvar('item', $structure['row']);
+
+        $body->decl($varAs, $vars);
+        $body->decl('temp_group', []);
+
+        $body->doForeach($varAs, 'item', null,
+            (new AST)->decl(
+                BH::hvar('temp_group', $varBy, null),
+                BH::hvar('item')
+            )
+        );
+
+        $body->comment("Proper format");
+        $body->decl($structure['as'], []);
+
+        $body->doForeach('temp_group', 'item', 'group',
+            (new AST)->decl(
+                BH::hvar($structure['as'], null),
+                [
+                    "grouper" => BH::hvar('group'),
+                    "list"    => BH::hvar('item'),
+                ]
+            )
+        );
+
+        $body->comment("Sorting done");
+    }
+
+    /**
      * Get custom filter
      *
      * @param  string $name Filter name
