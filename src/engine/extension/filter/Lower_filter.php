@@ -4,5 +4,5 @@ namespace placer\brio\engine\extension\filter;
 
 class Lower_filter
 {
-    public $phpAlias = "strtolower";
+    public $phpAlias = "mb_strtolower";
 }

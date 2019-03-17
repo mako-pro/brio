@@ -10,7 +10,7 @@ class Spaceless_tag
 
     public static function generator($compiler, $args)
     {
-        $regex = ['/>[ \t\r\n]+</sU','/^[ \t\r\n]+</sU','/>[ \t\r\n]+$/sU'];
+        $regex = ['/>[\s+]+</sU', '/^[\s+]+</sU', '/>[\s+]+$/sU'];
         $repl  = ['><', '<', '>'];
 
         return BH::hexec('preg_replace', $regex, $repl, $args[0]);

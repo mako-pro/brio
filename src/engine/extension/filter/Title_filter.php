@@ -13,7 +13,11 @@ class Title_filter
             $compiler->error("Title filter only needs one parameter");
         }
 
-        return BH::hexec('ucwords', BH::hexec('strtolower', $args[0]));
+        return BH::hexec(
+            'mb_convert_case',
+            BH::hexec('mb_strtolower', $args[0]),
+            MB_CASE_TITLE
+        );
     }
 
 }

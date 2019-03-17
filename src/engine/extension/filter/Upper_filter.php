@@ -4,5 +4,5 @@ namespace placer\brio\engine\extension\filter;
 
 class Upper_filter
 {
-    public $phpAlias = "strtoupper";
+    public $phpAlias = "mb_strtoupper";
 }

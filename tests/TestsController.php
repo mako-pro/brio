@@ -213,7 +213,16 @@ class TestsController extends Controller
 						'age'  => 23,
 					],
 				]];
-
+			case 'word_limiter':
+				return ['string' => [
+					'short' => 'short text<br>',
+					'long'  => 'long text string <br> new line<br> another line',
+				]];
+			case 'char_limiter':
+				return ['string' => [
+					'short' => 'Short text',
+					'long'  => 'Long text<br><br><br><br><br><br> string',
+				]];
 			default:
 				return ['' => ''];
 		}
