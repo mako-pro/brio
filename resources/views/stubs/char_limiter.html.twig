@@ -1,7 +1,0 @@
-<span class="preform">
-    {% set limit = 9 %}
-    LimitChars-{{ limit }}:
-    {{ string.short|char_limiter:limit }}
-    |
-    {{ string.long|char_limiter:limit }}
-</span>

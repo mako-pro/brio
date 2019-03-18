@@ -1,7 +1,0 @@
-<span class="preform">
-    {% set limit = 2 %}
-    LimitWords-{{ limit }}:
-    {{ string.short|word_limiter:limit|title }}
-    |
-    {{ string.long|word_limiter:limit|title }}
-</span>
