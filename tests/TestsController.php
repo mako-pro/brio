@@ -223,6 +223,17 @@ class TestsController extends Controller
 					'short' => 'Short text',
 					'long'  => 'Long text<br><br><br><br><br><br> string',
 				]];
+			case 'with':
+				return ['users' => [
+					[
+						'name' => 'yang mike',
+						'age'   => 21,
+					],
+					[
+						'name' => 'old denis',
+						'age'   => 52,
+					],
+				]];
 			default:
 				return ['' => ''];
 		}

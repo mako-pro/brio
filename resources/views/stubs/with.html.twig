@@ -1,0 +1,10 @@
+<span class="preform">
+    {% for user in users %}
+        {% with user.name as name %}
+            {{ name }} == {{ user.name|title }}
+            {% if ! forloop.last %}
+                |
+            {% endif %}
+        {% endwith %}
+    {% endfor %}
+</span>
