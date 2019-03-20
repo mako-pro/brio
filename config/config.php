@@ -9,10 +9,10 @@ return [
 	'options' => [
 		//'disable_methods' => false,
 		//'disable_funcs'   => false,
-		'auto_reload'     => true,
+		//'auto_reload'     => false,
 		//'force_compile'   => false,
 		//'disable_cache'   => false,
-		'force_include'   => true,
+		//'force_include'   => false,
 		//'auto_escape'     => false,
 		//'force_verify'    => false,
 		//'strip'           => false,

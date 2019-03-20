@@ -2,16 +2,15 @@
 
 namespace placer\brio;
 
-use LogicException;
+use Exception;
 use RuntimeException;
 use FilesystemIterator;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
-use InvalidArgumentException;
 
-use mako\view\renderers\RendererInterface;
-use placer\brio\engine\error\CompileException;
 use placer\brio\engine\Template;
+use placer\brio\engine\error\CompileException;
+use mako\view\renderers\RendererInterface;
 
 class Brio implements RendererInterface
 {
@@ -355,7 +354,7 @@ class Brio implements RendererInterface
     ];
 
     /**
-     * Clear cache
+     * Clearing template files status cache
      * @var bool
      */
     protected $clearCache = false;
@@ -427,14 +426,16 @@ class Brio implements RendererInterface
     }
 
     /**
-     * Get check test by name
+     * Check php-functions by alias
      *
      * @param string $name
      * @return string|bool
      */
     public function getCheckFunctions(string $name)
     {
-        return isset($this->checkFunctions[$name]) ? $this->checkFunctions[$name] : false;
+        return isset($this->checkFunctions[$name])
+                    ? $this->checkFunctions[$name]
+                    : false;
     }
 
     /**
@@ -493,7 +494,7 @@ class Brio implements RendererInterface
     public function getAccessor(string $name, string $key = null)
     {
         if (isset($this->accessors[$name]))
-         {
+        {
             if ($key)
                 return $this->accessors[$name][$key];
 
@@ -516,15 +517,17 @@ class Brio implements RendererInterface
     /**
      * Get template by name & options
      *
-     * @param  string $tpl
+     * @param  string $template
      * @param  int $options
      * @return Template
      */
-    public function getTemplate(string $tpl, int $options = 0)
+    public function getTemplate(string $template, int $options = 0)
     {
         $options |= $this->options;
 
-        $key = $options . "@" . $tpl;
+        $tplHash = sha1($template);
+
+        $key = $options . "@" . $tplHash;
 
         if (isset($this->templates[$key]))
         {
@@ -532,50 +535,57 @@ class Brio implements RendererInterface
 
             if (($this->options & self::AUTO_RELOAD) && ! $template->isValid())
             {
-                return $this->templates[$key] = $this->compile($tpl, true, $options);
+                return $this->templates[$key] = $this->compile($template, true, $options);
             }
             return $template;
         }
 
         if ($this->options & (self::FORCE_COMPILE | self::DISABLE_CACHE))
         {
-            return $this->compile($tpl, ! ($this->options & self::DISABLE_CACHE), $options);
+            return $this->compile($template, ! ($this->options & self::DISABLE_CACHE), $options);
         }
-        return $this->templates[$key] = $this->load($tpl, $options);
+
+        $template = $this->templates[$key] = $this->load($template, $options);
+
+        if (! $template->isValid())
+        {
+            return $this->compile($template, ! ($this->options & self::DISABLE_CACHE), $options);
+        }
+        return $template;
     }
 
     /**
-     * Check if template exists
+     * Check if template exists (calling from tpl body)
      *
-     * @param string $tpl
+     * @param string $template
      * @return bool
      */
-    public function templateExists(string $tpl)
+    public function templateExists(string $template)
     {
-        $key = $this->options . "@" . $tpl;
+        $key = $this->options . "@" . sha1($template);
 
         if (isset($this->templates[$key]))
             return true;
 
-        return (bool) $this->getRealTemplatePath($tpl);
+        return (bool) $this->getRealTemplatePath($template);
     }
 
     /**
-     * Compile and save template
+     * Compile and save the template
      *
-     * @param string $tpl
+     * @param string $template
      * @param bool $store
      * @param int $options
      * @throws CompileException
      * @return Template
      */
-    public function compile(string $tpl, bool $store = true, int $options = 0)
+    public function compile(string $template, bool $store = true, int $options = 0)
     {
-        $template = $this->getRawTemplate()->load($tpl);
+        $template = $this->getRawTemplate()->load($template);
 
         if ($store)
         {
-            $cacheName = $this->getCompileName($tpl, $options);
+            $cacheName = $this->getCompileName($template, $options);
 
             $compilePath = $this->compileDirectory . '/' . $cacheName . '.' . mt_rand(0, 100000) . '.tmp';
 
@@ -604,46 +614,46 @@ class Brio implements RendererInterface
     public function clearAllCompiles()
     {
         $this->clean($this->compileDirectory);
+
         $this->templates = [];
     }
 
     /**
-     * Get the template file source code
+     * Get the origin view file
      *
-     * @param string $tpl
+     * @param string $template
      * @param int $time
      * @return string
      */
-    public function getSource(string $tpl, &$time)
+    public function getViewSource(string $template, &$time)
     {
-        $tpl = $this->getTemplatePath($tpl);
+        if (! realpath($template))
+            throw new Exception("Template $template not found");
 
         if ($this->clearCache === true)
-        {
-            clearstatcache(true, $tpl);
-        }
+            clearstatcache(true, $template);
 
-        $time = filemtime($tpl);
+        // For use in included template body
+        $time = filemtime($template);
 
-        return file_get_contents($tpl);
+        return file_get_contents($template);
     }
 
     /**
      * Get last modified time
      *
-     * @param string $tpl
+     * @param string $template
      * @return int
      */
-    public function getLastModified(string $tpl)
+    public function getLastModified(string $template)
     {
-        $tpl = $this->getTemplatePath($tpl);
+        if (! realpath($template))
+            throw new Exception("Template $template not found");
 
         if ($this->clearCache === true)
-        {
-            clearstatcache(true, $tpl);
-        }
+            clearstatcache(true, $template);
 
-        return filemtime($tpl);
+        return filemtime($template);
     }
 
     /**
@@ -656,40 +666,31 @@ class Brio implements RendererInterface
     {
         foreach ($templates as $template => $mtime)
         {
-            if (! $path = $this->getRealTemplatePath($template))
-            {
-                return false;
-            }
+            if (! realpath($template))
+                throw new Exception("Template $template not found");
 
             if ($this->clearCache === true)
-            {
-                clearstatcache(true, $path);
-            }
+                clearstatcache(true, $template);
 
-            if (@filemtime($path) !== $mtime)
-            {
+            if (filemtime($template) !== $mtime)
                 return false;
-            }
         }
         return true;
     }
 
-
-
-    /// PROTECTED ------------
-
-
     /**
-     * Set compile directory
+     * Set the compile directory
      *
      * @param string $directory
-     * @throws LogicException
+     * @throws Exception
      * @return $this
      */
     protected function setCompileDirectory(string $directory)
     {
         if (! is_writable($directory))
-            throw new LogicException("Cache directory $directory is not writable");
+            throw new Exception(
+                "Cache directory $directory is not writable"
+            );
 
         $this->compileDirectory = $directory;
 
@@ -786,19 +787,21 @@ class Brio implements RendererInterface
      */
     protected function load(string $template, int $options)
     {
+        $template = $this->getRealTemplatePath($template);
+
         $fileName = $this->getCompileName($template, $options);
 
         if (is_file($this->compileDirectory . "/" . $fileName))
         {
-            // Need for included template
+            // For included below template body
             $brio = $this;
 
             $templateFile = include($this->compileDirectory . "/" . $fileName);
 
-            if (! ($this->options & self::AUTO_RELOAD) ||
-                ($this->options & self::AUTO_RELOAD) &&
-                $templateFile instanceof Render &&
-                $templateFile->isValid())
+            if (! ($this->options & self::AUTO_RELOAD)
+                || ($this->options & self::AUTO_RELOAD)
+                && $templateFile instanceof Render
+                && $templateFile->isValid())
             {
                 return $templateFile;
             }
@@ -819,7 +822,7 @@ class Brio implements RendererInterface
 
         $templateHash = sha1($template);
 
-        return $templateHash . '.' . $options . '.php';
+        return $options . "@" . $templateHash . ".php";
     }
 
     /**
@@ -828,12 +831,10 @@ class Brio implements RendererInterface
      * @param string $template
      * @return bool|string
      */
-    protected function getRealTemplatePath(string $template)
+    public function getRealTemplatePath(string $template)
     {
         if ($path = realpath($template))
-        {
             return $path;
-        }
 
         $tplDir = $this->templatesDirectory;
 
@@ -856,18 +857,16 @@ class Brio implements RendererInterface
     /**
      * Get template path
      *
-     * @param string $tpl
+     * @param string $template
      * @return string
-     * @throws RuntimeException
+     * @throws Exception
      */
-    protected function getTemplatePath($tpl)
+    protected function getTemplatePath($template)
     {
-        if ($path = $this->getRealTemplatePath($tpl))
-        {
+        if ($path = $this->getRealTemplatePath($template))
             return $path;
-        }
 
-        throw new RuntimeException("Template $tpl not found");
+        throw new Exception("Template $template not found");
     }
 
     /**
