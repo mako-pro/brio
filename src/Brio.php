@@ -235,8 +235,8 @@ class Brio implements RendererInterface
             'type'       => self::BLOCK_COMPILER,
             'open'       => 'placer\brio\engine\Compiler::tagBlockOpen',
             'close'      => 'placer\brio\engine\Compiler::tagBlockClose',
-            'tags'       => array('parent' => 'placer\brio\engine\Compiler::tagParent'),
-            'float_tags' => array('parent' => 1)
+            'tags'       => ['parent' => 'placer\brio\engine\Compiler::tagParent'],
+            'float_tags' => ['parent' => 1]
         ],
         'extends' => [
             'type'   => self::INLINE_COMPILER,
@@ -523,31 +523,29 @@ class Brio implements RendererInterface
      */
     public function getTemplate(string $template, int $options = 0)
     {
-        $options |= $this->options;
-
-        $tplHash = sha1($template);
-
-        $key = $options . "@" . $tplHash;
-
-        if (isset($this->templates[$key]))
-        {
-            $template = $this->templates[$key];
-
-            if (($this->options & self::AUTO_RELOAD) && ! $template->isValid())
-            {
-                return $this->templates[$key] = $this->compile($template, true, $options);
-            }
-            return $template;
-        }
+        $template = $this->getRealTemplatePath($template);
 
         if ($this->options & (self::FORCE_COMPILE | self::DISABLE_CACHE))
         {
             return $this->compile($template, ! ($this->options & self::DISABLE_CACHE), $options);
         }
 
+        $key = $this->getCompileName($template, $options);
+
+        if (isset($this->templates[$key]))
+        {
+            $template = $this->templates[$key];
+
+            if (($this->options & self::AUTO_RELOAD) && ! $template->verifyMtime())
+            {
+                return $this->templates[$key] = $this->compile($template, true, $options);
+            }
+            return $template;
+        }
+
         $template = $this->templates[$key] = $this->load($template, $options);
 
-        if (! $template->isValid())
+        if (! $template->verifyMtime())
         {
             return $this->compile($template, ! ($this->options & self::DISABLE_CACHE), $options);
         }
@@ -562,11 +560,6 @@ class Brio implements RendererInterface
      */
     public function templateExists(string $template)
     {
-        $key = $this->options . "@" . sha1($template);
-
-        if (isset($this->templates[$key]))
-            return true;
-
         return (bool) $this->getRealTemplatePath($template);
     }
 
@@ -654,28 +647,6 @@ class Brio implements RendererInterface
             clearstatcache(true, $template);
 
         return filemtime($template);
-    }
-
-    /**
-     * Verify templates (check mtime)
-     *
-     * @param array $templates [template_name => modified]
-     * @return bool
-     */
-    public function verify(array $templates)
-    {
-        foreach ($templates as $template => $mtime)
-        {
-            if (! realpath($template))
-                throw new Exception("Template $template not found");
-
-            if ($this->clearCache === true)
-                clearstatcache(true, $template);
-
-            if (filemtime($template) !== $mtime)
-                return false;
-        }
-        return true;
     }
 
     /**
@@ -787,16 +758,15 @@ class Brio implements RendererInterface
      */
     protected function load(string $template, int $options)
     {
-        $template = $this->getRealTemplatePath($template);
 
-        $fileName = $this->getCompileName($template, $options);
+        $compileName = $this->getCompileName($template, $options);
 
-        if (is_file($this->compileDirectory . "/" . $fileName))
+        if ($filePath = realpath($this->compileDirectory . "/" . $compileName))
         {
             // For included below template body
             $brio = $this;
 
-            $templateFile = include($this->compileDirectory . "/" . $fileName);
+            $templateFile = include($filePath);
 
             if (! ($this->options & self::AUTO_RELOAD)
                 || ($this->options & self::AUTO_RELOAD)
