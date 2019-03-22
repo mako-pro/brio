@@ -15,7 +15,7 @@ class Render extends ArrayObject
      * Template properties
      * @var array
      */
-    private static $templateProps = [
+    private static $propertyList = [
         'name'    => 'runtime',
         'time'    => 0,
         'depends' => [],
@@ -29,10 +29,10 @@ class Render extends ArrayObject
     protected $callableCode;
 
     /**
-     * Template name
+     * Template base name
      * @var string
      */
-    protected $templateName;
+    protected $baseName;
 
     /**
      * Template storage
@@ -62,7 +62,7 @@ class Render extends ArrayObject
      * Macros
      * @var array
      */
-    protected $templateMacros = [];
+    protected $internalMacros = [];
 
     /**
      * Constructor
@@ -73,14 +73,14 @@ class Render extends ArrayObject
      */
     public function __construct(Brio $brio, Closure $code, array $props = [])
     {
-        $props += static::$templateProps;
+        $props += static::$propertyList;
 
-        $this->brio             = $brio;
-        $this->callableCode     = $code;
-        $this->templateName     = $props["name"];
-        $this->cmplTimestamp    = $props["time"];
-        $this->dependencies     = $props["depends"];
-        $this->templateMacros   = $props["macros"];
+        $this->brio           = $brio;
+        $this->callableCode   = $code;
+        $this->baseName       = $props["name"];
+        $this->cmplTimestamp  = $props["time"];
+        $this->dependencies   = $props["depends"];
+        $this->internalMacros = $props["macros"];
 
     }
 
@@ -105,23 +105,13 @@ class Render extends ArrayObject
     }
 
     /**
-     * Get template string
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->templateName;
-    }
-
-    /**
      * Get template name
      *
      * @return string
      */
     public function getName()
     {
-        return $this->templateName;
+        return $this->baseName;
     }
 
     /**
@@ -132,6 +122,21 @@ class Render extends ArrayObject
     public function getTime()
     {
         return $this->cmplTimestamp;
+    }
+
+    /**
+     * Get internal macro
+     *
+     * @param string $name
+     * @throws RuntimeException
+     * @return mixed
+     */
+    public function getMacro(string $name)
+    {
+        if (empty($this->internalMacros[$name]))
+            throw new RuntimeException("Not found macro named: $name");
+
+        return $this->internalMacros[$name];
     }
 
     /**
@@ -147,21 +152,6 @@ class Render extends ArrayObject
                 return false;
         }
         return true;
-    }
-
-    /**
-     * Get internal macro
-     *
-     * @param string $name
-     * @throws RuntimeException
-     * @return mixed
-     */
-    public function getMacro(string $name)
-    {
-        if (empty($this->templateMacros[$name]))
-            throw new RuntimeException("Not found macro named: $name");
-
-        return $this->templateMacros[$name];
     }
 
     /**
@@ -197,13 +187,11 @@ class Render extends ArrayObject
         }
     }
 
-    /**
-     * Stub
-     *
-     * @param $method
-     * @param $args
-     * @throws BadMethodCallException
-     */
+    public function __toString()
+    {
+        return $this->baseName;
+    }
+
     public function __call($method, $args)
     {
         throw new BadMethodCallException("Unknown method named $method");
