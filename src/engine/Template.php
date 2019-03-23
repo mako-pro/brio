@@ -186,7 +186,7 @@ class Template extends Render
     {
         $this->baseName = $this->brio->getRealTemplatePath($template);
 
-        $this->source = $this->brio->getViewSource($this->baseName, $this->cmplTimestamp);
+        $this->source = $this->brio->getTemplateSource($this->baseName, $this->cmplTimestamp);
 
         $this->compileStage = self::COMPILE_STAGE_LOADED;
 
@@ -597,7 +597,9 @@ class Template extends Render
     public function extend(string $tpl)
     {
         if (! $this->isStageDone(self::COMPILE_STAGE_PARSED))
+        {
             $this->compile();
+        }
 
         $parent = $this->brio->getRawTemplate()->load($tpl, false);
 
@@ -607,7 +609,9 @@ class Template extends Render
         $parent->extended = $this->getName();
 
         if (! $this->extStack)
+        {
             $this->extStack[] = $this->getName();
+        }
 
         $this->extStack[] = $parent->getName();
         $parent->options  = $this->options;

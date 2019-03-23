@@ -53,7 +53,7 @@ class Compiler
                     $var = $tpl->tmpVar();
 
                     if ($pp)
-                        return $var . ' = $var; $var = ' . self::toArray($pp) . ' + $var; ?>' . $inc->getBody() . '<?php $var = ' . $var . '; unset(' . $var . ');';
+                        return $var . ' = $var; $var = ' . static::toArray($pp) . ' + $var; ?>' . $inc->getBody() . '<?php $var = ' . $var . '; unset(' . $var . ');';
 
                     return $var . ' = $var; ?>' . $inc->getBody() . '<?php $var = ' . $var . '; unset(' . $var . ');';
 
@@ -66,7 +66,7 @@ class Compiler
         }
 
         if ($pp)
-            return '$tpl->getStorage()->getTemplate(' . $cname . ')->display(' . self::toArray($pp) . ' + $var);';
+            return '$tpl->getStorage()->getTemplate(' . $cname . ')->display(' . static::toArray($pp) . ' + $var);';
 
         return '$tpl->getStorage()->getTemplate(' . $cname . ')->display($var);';
     }
@@ -206,7 +206,7 @@ class Compiler
         while ($token = $tokens->key())
         {
             $param = $tokens->get(T_STRING);
-            $varname = self::foreachProp($scope, $param);
+            $varname = static::foreachProp($scope, $param);
             $tokens->getNext("=");
             $tokens->next();
             $scope['before'][] = $scope->tpl->parseVariable($tokens)." = &". $varname;
@@ -395,7 +395,7 @@ class Compiler
      */
     public static function switchClose(Tokenizer $tokens, Tag $scope)
     {
-        self::caseResort($scope);
+        static::caseResort($scope);
 
         $expr    = $scope["var"];
         $code    = $scope["expr"] . ";\n";
@@ -671,10 +671,10 @@ class Compiler
     public static function stdFuncParser(Tokenizer $tokens, Tag $tag)
     {
         if (is_string($tag->callback))
-            return $tag->out($tag->callback . "(" . self::toArray($tag->tpl->parseParams($tokens)) . ', $tpl, $var)');
+            return $tag->out($tag->callback . "(" . static::toArray($tag->tpl->parseParams($tokens)) . ', $tpl, $var)');
 
         return '$info = $tpl->getStorage()->getTag('.var_export($tag->name, true).');'.PHP_EOL.
-            $tag->out('call_user_func_array($info["function"], array('.self::toArray($tag->tpl->parseParams($tokens)).', $tpl, &$var))');
+            $tag->out('call_user_func_array($info["function"], array('.static::toArray($tag->tpl->parseParams($tokens)).', $tpl, &$var))');
     }
 
     /**
@@ -726,7 +726,7 @@ class Compiler
      */
     public static function stdFuncOpen(Tokenizer $tokens, Tag $tag)
     {
-        $tag["params"] = self::toArray($tag->tpl->parseParams($tokens));
+        $tag["params"] = static::toArray($tag->tpl->parseParams($tokens));
         $tag->setOption(Brio::AUTO_ESCAPE, false);
 
         return 'ob_start();';

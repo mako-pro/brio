@@ -536,7 +536,7 @@ class Brio implements RendererInterface
         {
             $template = $this->templates[$key];
 
-            if (($this->options & self::AUTO_RELOAD) && ! $template->verifyMtime())
+            if (($this->options & self::AUTO_RELOAD) && ! $template->isFresh())
             {
                 return $this->templates[$key] = $this->compile($template, true, $options);
             }
@@ -545,7 +545,7 @@ class Brio implements RendererInterface
 
         $template = $this->templates[$key] = $this->load($template, $options);
 
-        if (! $template->verifyMtime())
+        if (! $template->isFresh())
         {
             return $this->compile($template, ! ($this->options & self::DISABLE_CACHE), $options);
         }
@@ -618,7 +618,7 @@ class Brio implements RendererInterface
      * @param int $time
      * @return string
      */
-    public function getViewSource(string $template, &$time)
+    public function getTemplateSource(string $template, &$time)
     {
         if (! realpath($template))
             throw new Exception("Template $template not found");
@@ -678,9 +678,9 @@ class Brio implements RendererInterface
     {
         if (is_array($options))
         {
-            $options = self::makeMask(
+            $options = static::makeMask(
                 $options,
-                self::$defaultOptions,
+                static::$defaultOptions,
                 $this->options
             );
         }

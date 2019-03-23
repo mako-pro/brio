@@ -42,9 +42,9 @@ class Render extends ArrayObject
 
     /**
      * Compilation timestamp
-     * @var float
+     * @var integer
      */
-    protected $cmplTimestamp = 0.0;
+    protected $cmplTimestamp = 0;
 
     /**
      * Template dependencies
@@ -81,7 +81,6 @@ class Render extends ArrayObject
         $this->cmplTimestamp  = $props["time"];
         $this->dependencies   = $props["depends"];
         $this->internalMacros = $props["macros"];
-
     }
 
     /**
@@ -140,15 +139,15 @@ class Render extends ArrayObject
     }
 
     /**
-     * Verify template dependencies
+     * Verify template by mtime
      *
      * @return bool
      */
-    public function verifyMtime()
+    public function isFresh()
     {
         foreach ($this->dependencies as $template => $mtime)
         {
-            if ($this->brio->getLastModified($template) !== $this->cmplTimestamp)
+            if ($this->brio->getLastModified($template) !== $mtime)
                 return false;
         }
         return true;
