@@ -153,7 +153,7 @@ class RangeIterator implements Iterator, Countable
      */
     public function __toString()
     {
-        return "[".implode(", ", range($this->min, $this->max, $this->step))."]";
+        return "[" . implode(", ", range($this->min, $this->max, $this->step)) . "]";
     }
 
 }
