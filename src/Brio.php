@@ -59,6 +59,12 @@ class Brio implements RendererInterface
     const ACCESSOR_CHAIN    = 'placer\brio\engine\Accessor::parserChain';
 
     /**
+     * Define charset
+     * @var string
+     */
+    public static $charset = 'UTF-8';
+
+    /**
      * Brio options
      * @var array
      */
@@ -75,12 +81,6 @@ class Brio implements RendererInterface
         "auto_trim"        => self::AUTO_TRIM,
         "strip"            => self::AUTO_STRIP,
     ];
-
-    /**
-     * Define charset
-     * @var string
-     */
-    public static $charset = 'UTF-8';
 
     /**
      * Templates storage
@@ -360,12 +360,6 @@ class Brio implements RendererInterface
     protected $clearCache = false;
 
     /**
-     * Template file extension
-     * @var string
-     */
-    public $fileExtension;
-
-    /**
      * Path to template files
      * @var string
      */
@@ -376,6 +370,12 @@ class Brio implements RendererInterface
      * @var string
      */
     protected $compileDirectory;
+
+    /**
+     * Template file extension
+     * @var string
+     */
+    public $fileExtension = '.brio';
 
     /**
      * Constructor
