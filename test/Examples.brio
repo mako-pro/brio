@@ -1,0 +1,533 @@
+
+{* Operators *}
+
+	{* Arithmetic operators *}
+	{-$a}
+	{$a + $b}
+	{$a - $b}
+	{$a / $b}
+	{$a * $b}
+	{$a % $b}
+	{$a < $b}
+	{$a + $b * $c/$d - $e*5 + 1e3}
+
+	{* Logical operators *}
+	{$a || $b}
+	{$a && $b}
+	{!$a}
+	{$a or $b}
+	{$a and $b}
+	{$a xor $b}
+	{if $b && $c} ... {/if}
+
+	{* Comparison operators *}
+	{$a < $b }
+	{$a > $b }
+	{$a <= $b }
+	{$a >= $b }
+	{$a == $b }
+	{$a === $b}
+	{$a !== $b}
+	{$a != $b }
+	{$a <> $b }
+	{if $b >= 5} ... {/if}
+
+	{if 0 == "a"} {* 0 == 0 -> true *} {/if}
+	{if "1" == "01"} {* 1 == 1 -> true *} {/if}
+	{if "10" == "1e1"} {* 10 == 10 -> true *} {/if}
+	{if 100 == "1e2"} {* 100 == 100 -> true *} {/if}
+
+	{* Assignment operator *}
+	{$a = $b }
+	{$a += $b }
+	{$a -= $b }
+	{$a *= $b }
+	{$a /= $b }
+	{$a %= $b }
+	{$a &= $b }
+	{$a |= $b }
+	{$a ^= $b }
+	{$a <<= $b}
+	{$a >>= $b}
+	{set $b |= $flags}
+
+	{* Increment / Decrement Operators *}
+	{++$a}
+	{$a++}
+	{--$a}
+	{$a--}
+	{$a ~ $b}
+
+
+{* Syntax *}
+
+	{* Variables *}
+	{$foo.bar.baz}
+	{$foo.$bar.$baz}
+	{$foo[5].baz}
+	{$foo[5].$baz}
+	{$foo.bar.baz[4]}
+	{$foo[ $bar.baz ]}
+	{$foo[5]}
+	{$foo.5}
+	{$foo.bar}
+	{$foo.'bar'}
+	{$foo."bar"}
+	{$foo['bar']}
+	{$foo["bar"]}
+	{$foo.$bar}
+	{$foo[$bar]}
+	{$foo->bar}
+	{$foo->bar.buz}
+	{$foo->bar.buz[ $bar->getId("user") ]}
+	{$foo->bar(5)->buz(5.5)}
+
+	{* System variables *}
+	{$.env}       $_ENV.
+	{$.get}       $_GET.
+	{$.post}      $_POST.
+	{$.files}     $_FILES.
+	{$.cookie}    $_COOKIE.
+	{$.server}    $_SERVER.
+	{$.session}   $_SESSION.
+	{$.globals}   $GLOBALS.
+	{$.request}   $_REQUEST.
+
+	{$.tpl.name}      Current template name
+	{$.tpl.options}   Template options as integer
+	{$.tpl.time}      Template timestamp
+	{$.const}         PHP constants
+	{$.php}           Call static method [ $.php.Storage.FS.put($filename, $data) --> $.php.Storage.FS::put($filename, $data) ]
+	{set $ferch = $.fetch($name, $values)}  Fetching template [ Brio::fetch() ]
+
+
+{* Template tags *}
+
+	{set $v = "string"}
+	{set $v = 5}
+	{set $v = $x + $y}
+	{set $v = $z++ + 1}
+	{set $v = --$z}
+	{set $v = $y / $x}
+	{set $v = $y - $x}
+	{set $v = $y * $x - 2}
+	{set $v = ($y^$x) + 7}
+	{set $v = [1, 2, 3]}
+	{set $v = []}
+	{set $v = ["one"|upper => 1, 4 => $x, "three" => 3]}
+	{set $v = ["key1" => $y * $x - 2, "key2" => ["z" => $z]]}
+	{set $v = count([1, 2, 3]) + 7}
+
+	{autoescape true}
+		...
+		Text: {$text} {* value of the variable $text will be escaped *}
+		...
+	{/autoescape}
+
+	{autotrim true}
+		...
+		Text: {$text} {* value of the variable $text will be escaped *}
+		...
+	{/autotrim}
+
+	{extends 'package::layouts.master'}
+
+	{extends $parentName}
+
+	{block blockName}content{/block}
+
+	{block 'blockName'}content{/block}
+
+	{block "block{$number}"}content {$number}{/block}
+
+	{if $condition}
+		{block "bk-if"}content, then 'if' is true{/block}
+	{else}
+		{block "bk{$fail}"}content, then 'if' is false{/block}
+	{/if}
+
+	{use 'blockName'}
+
+	{block 'blockName'}
+		content ...
+		{parent}
+		content ...
+	{/block}
+
+	{block 'title'}DefaultTitle{/block}         {* Parent template *}
+
+	{block 'title'}{parent} - {$title}{/block}  {* Children template *}
+
+	{filter|strip_tags|truncate:20}
+		Remove all HTML <b>tags</b> and truncate {$text} to 20 symbols
+	{/filter}
+
+	{foreach $list as $key => $value index=$index first=$first last=$last}
+		{* code *}
+		{break}
+		{* code *}
+		{continue}
+		{* code *}
+	{foreachelse}
+		{* code *}
+	{/foreach}
+
+	{if <expression>}
+		{* ...code... *}
+	{elseif <expression>}
+		{* ...code... *}
+	{else}
+		{* ...code... *}
+	{/if}
+
+	{ignore}
+		var data = {"time": obj.ts};
+	{/ignore}
+
+	{script:ignore} ... {/script}
+
+	{foreach:ignore ...} ... {/foreach}
+
+	{include "pages/partial/latest" page=$item limit=50}
+
+	{include "package::pages.partial.latest" page=$item limit=50}
+
+	{insert 'template.name'}
+
+	{macro plus($x, $y, $z=0)}
+		x + y + z = {$x + $y + $z}
+	{/macro}
+
+	{import 'math.tpl'}
+
+	{import [plus, minus, exp] from 'math.tpl' as math}
+
+	{autoescape true}
+		...
+		{$var|up}     {* escape *}
+		{raw $var|up} {* unescape *}
+		...
+		{"name is: <b>{$name|low}</b>"}     {* escape *}
+		{raw "name is: <b>{$name|low}</b>"} {* unescape *}
+		...
+	{/autoescape}
+
+	{autoescape true}
+		...
+		{my_func page=5}     {* escape *}
+		{my_func:raw page=5} {* unescape *}
+		...
+	{/autoescape}
+
+	{switch $foo}
+		{case 'value1'}
+			{* code *}
+		{case 'value2', 'value3'}
+			{* code *}
+		{case default}
+			{* code *}
+	{/switch}
+
+	{unset $a $b $c.d.e} {* Multiple unset *}
+
+{* Template modifiers *}
+
+	{$ts|date_format:"%Y/%m/%d %H:%M:%s"}
+
+	{$string|ematch:$pattern}
+
+	{$string|ereplace:'/(\w+) (\d+), (\d+)/i':'${1}1, $3'}
+
+	{$post.title|escape:'html'}
+
+	{$string|esplit:$pattern = '/,\s*/'}
+
+	{if $number|in:[1, 3, 42]}
+		...
+	{/if}
+
+	{$string|join:$delimiter = ","}
+
+	{if $images|length > 5}
+		...
+	{/if}
+
+	{$name|upper}
+
+	{if $color|match:"*gr[ae]y"}
+		...
+	{/if}
+
+	{$fruits|replace:"pear":"orange"}
+
+	{$string|split:$delimiter = ","}
+
+	{"   one    two   "|strip} {* Returns 'one two' *}
+
+	{* truncate($string, $length = 80, $etc = '...', $bywords = false, $middle = false) *}
+	{$longstring|truncate:$length:$etc:$bywords:$middle}
+
+
+{* Real World Examples *}
+
+	{* Page layout (layout.brio) *}
+	<!doctype html>
+	{filter|strip:true}
+	<html>
+	    <head>
+			<meta charset="utf-8">
+	        <title>{ucwords($strTitle)}</title>
+	        <link rel="stylesheet" href="css/style.css">
+	    </head>
+	    <body>
+	        <div id="layout">
+	            {include "parts/header"}
+	            {include "parts/tizers"}
+	            <hr/>
+	            <main>
+	                <table>
+	                    <tr>
+	                        <td id="left">
+	                            {include "parts/vendors"}
+	                            <br>
+	                            {include "parts/online"}
+	                        </td>
+	                        <td id="center">
+	                            {include "parts/product"}
+	                            <br>
+	                            {include "parts/comments"}
+	                        </td>
+	                        <td id="right">
+	                            {include "parts/blog"}
+	                            <br>
+	                            {include "parts/news"}
+	                        </td>
+	                    </tr>
+	                </table>
+	            </main>
+	            {include "parts/footer"}
+	        </div>
+	    </body>
+	</html>
+	{/filter}
+
+	{* Template part (parts/header.brio) *}
+	<header>
+	    <h2>{ucwords($strTitle)}</h2>
+	    <nav>
+	        <ul>
+	            {foreach $menuItems as $item}
+	                <li{if $item.current} class="current"{/if}>
+	                    <a href="{$item.url}">
+	                        {if $item.current}
+	                            <b>{ucfirst($item.name)}</b>
+	                        {else}
+	                            {ucfirst($item.name)}
+	                        {/if}
+	                    </a>
+	                </li>
+	            {/foreach}
+	        </ul>
+	    </nav>
+	</header>
+
+	{* Template part (parts/tizers.brio) *}
+	<section id="tizers">
+	    <table>
+	        <tr>
+	            {foreach $tizerItems as $item}
+	                <td>
+	                    <a href="{$item.url}">{$item.text}</a>
+	                </td>
+	            {/foreach}
+	        </tr>
+	    </table>
+	</section>
+
+	{* Template part (parts/vendors.brio) *}
+	<section id="vendors">
+	    <h4>Vendors:</h4>
+	    <ul>
+	        {foreach $vendorItems as $item}
+	            <li{if $item.id == $product.vendor.id} class="current"{/if}>
+	            	<a href="vendor/{$item.id}">{$item.name}</a>
+	            </li>
+	        {/foreach}
+	    </ul>
+	</section>
+
+	{* Template part (parts/online.brio) *}
+	<section id="online">
+	    <h4>Online users ({$online.count}):</h4>
+	    {foreach $online.users as $user last=$last}
+	        <span>
+	        	<a href="user/{$user.0}">{$user.1}</a>{if $last}.{else}, {/if}
+	        </span>
+	    {/foreach}
+	</section>
+
+	{* Template part (parts/product.brio) *}
+	{var $product = $product}
+	{var $title} {$product.vendor.name} {$product.name}{/var}
+	<h1>{$title} {if $product.model}({$product.model}){/if}</h1>
+	<span>
+		<b>Color:</b> {$product.color}, <b>Warranty:</b> {$product.warranty}, <b>Country:</b> {$product.country}
+	</span>
+	<table id="product_layout">
+	    <tr>
+	        <td>
+	            {include "parts/product_images"}
+	            <br>
+	            {include "parts/product_models"}
+	        </td>
+	        <td>
+	            <section id="price">
+	                <b>Price:</b> ${$product.price} (<s>${$product.price_old}</s>) <button>Buy</button>
+	            </section>
+	            <br>
+	            {include "parts/product_details"}
+	            <br>
+	            {include "parts/product_techspec"}
+	        </td>
+	    </tr>
+	</table>
+
+	{* Template part (parts/product_images.brio) *}
+	<section id="product_image">
+	    <div id="product_image_main">
+	        <img src="{$product.images.0}" alt="">
+	    </div>
+	    <div id="product_image_list">
+	        {foreach $product.images as $image first=$first index=$index}
+	            {if !$first }
+	                <a href="#{$index}">
+	                	<img src="{$image}" alt="">
+	                </a>
+	            {/if}
+	        {/foreach}
+	        <div style="clear:both"></div>
+	    </div>
+	</section>
+
+	{* Template part (parts/product_models.brio) *}
+	<section id="models">
+	    <b>Other models</b>
+	    <ul>
+	        {foreach $product.modelItems as $item}
+	            <li>
+	            	<a href="{$item.url}">{$item.name}</a>
+	            </li>
+	        {/foreach}
+	    </ul>
+	</section>
+
+	{* Template part (parts/product_details.brio) *}
+	<section id="details">
+	    <h3>Details</h3>
+	    <ul>
+	        {foreach $product.details as $item}
+	            <li>{$item}</li>
+	        {/foreach}
+	    </ul>
+	</section>
+
+	{* Template part (parts/product_techspec.brio) *}
+	<section id="tech_spec">
+	    <h3>Tech spec:</h3>
+	    <table>
+	        {foreach $product.props as $property}
+	            {include "parts/product_techspec_prop"}
+	        {/foreach}
+	    </table>
+	</section>
+
+	{* Template part (parts/product_techspec_prop.brio) *}
+	<tr>
+	    {if $property.type == 'category'}
+	        <td colspan="2" class="category">
+	        	<b>{ucfirst(strtolower($property.value))}</b>
+	        </td>
+	    {elseif $property.type == 'bool'}
+	        <td>{ucfirst($property.name)}</td>
+	        <td>{if $property.value}Yes{else}No{/if}</td>
+	    {elseif $property.type == 'string'}
+	        <td>{ucfirst($property.name)}</td>
+	        <td>{$property.value}</td>
+	    {elseif $property.type == 'list'}
+	        <td>{ucfirst($property.name)}</td>
+	        <td>
+	            {foreach $property.value as $value last=$last}
+	                {$value}{if $last}.{else}, {/if}
+	            {/foreach}
+	        </td>
+	    {/if}
+	</tr>
+
+	{* Template part (parts/comments.brio) *}
+	<section id="comments">
+	    <h2>Comments ({$comments.count})</h2>
+	    <ul>
+	        {foreach $comments.list as $comment}
+	            <li>
+	                <b>{$comment.user}</b>,
+	                <span class="date">{$comment.date->format('m/d/Y')}</span>
+	                <p>{$comment.text}</p>
+	            </li>
+	        {/foreach}
+	    </ul>
+	</section>
+
+	{* Template part (parts/blog.brio) *}
+	<section id="blog">
+	    <h3>Blog</h3>
+	    <ul>
+	        {foreach $blogPosts as $post}
+	            <li>{$post.date->format('m/d/Y')}
+	            	<a href="blog/{$post.id}">{$post.title}</a>
+	            </li>
+	        {/foreach}
+	    </ul>
+	</section>
+
+	{* Template part (parts/news.brio) *}
+	<section id="news">
+	    <h3>Recent News</h3>
+	    <table>
+	        {foreach $newsList as $article}
+	            <tr class="{cycle ["white", "grey"]}">
+	                <td>
+	                    <h4><a href="news/{$article.id}">{$article.title}</a></h4>
+	                    <span class="date">{$article.date->format('m/d/Y')}</span>
+	                    <span class="lead">{$article.lead}</span>
+	                    <span class="tags">
+	                        Tags:
+	                        {foreach $article.tags as $tag last=$last}
+	                            <span>{$tag}{if $last}.{else}, {/if}</span>
+	                        {/foreach}
+	                    </span>
+	                    <span>Comments ({$article.comments_count})</span>
+	                </td>
+	            </tr>
+	        {/foreach}
+	    </table>
+	</section>
+
+	{* Template part (parts/footer.brio) *}
+	<footer>
+	    <h5>&copy; {$copyright}</h5>
+	    <nav>
+	        <ul>
+	            {foreach $menuItems as $item}
+	                <li{if $item.current} class="current"{/if}>
+	                    <a href="{$item.url}">
+	                        {if $item.current}
+	                            <b>{ucfirst($item.name)}</b>
+	                        {else}
+	                            {ucfirst($item.name)}
+	                        {/if}
+	                    </a>
+	                </li>
+	            {/foreach}
+	        </ul>
+	    </nav>
+	</footer>

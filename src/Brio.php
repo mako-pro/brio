@@ -100,14 +100,13 @@ class Brio implements RendererInterface
      */
     protected $modifiers = [
         "upper"       => 'strtoupper',
-        "up"          => 'strtoupper',
         "lower"       => 'strtolower',
-        "low"         => 'strtolower',
+        "capfirst"    => 'strtolower',
+        "title"       => 'strtolower',
         "date_format" => 'placer\brio\engine\Modifier::dateFormat',
         "date"        => 'placer\brio\engine\Modifier::date',
         "truncate"    => 'placer\brio\engine\Modifier::truncate',
         "escape"      => 'placer\brio\engine\Modifier::escape',
-        "e"           => 'placer\brio\engine\Modifier::escape',
         "unescape"    => 'placer\brio\engine\Modifier::unescape',
         "strip"       => 'placer\brio\engine\Modifier::strip',
         "length"      => 'placer\brio\engine\Modifier::length',
@@ -724,7 +723,7 @@ class Brio implements RendererInterface
      * @param array $vars
      * @return mixed
      */
-    protected function fetch(string $template, array $vars = [])
+    public function fetch(string $template, array $vars = [])
     {
         return $this->getTemplate($template)->fetch($vars);
     }

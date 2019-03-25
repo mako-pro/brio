@@ -25,7 +25,7 @@ class BrioPackage extends Package
      */
     protected function bootstrap()
     {
-        $this->container->get('view')->extend('.tpl', function ()
+        $this->container->get('view')->extend('.brio', function ()
         {
             $config = $this->container->get('config');
 

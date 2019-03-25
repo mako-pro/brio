@@ -6,7 +6,6 @@ use LogicException;
 use RuntimeException;
 
 use placer\brio\engine\error\UnexpectedTokenException;
-use placer\brio\engine\Render;
 use placer\brio\Brio;
 
 class Accessor
@@ -104,7 +103,7 @@ class Accessor
     {
         $method = $tokens->skip('.')->need(T_STRING)->getAndNext();
 
-        if (method_exists('Render', 'get' . $method))
+        if (method_exists('placer\brio\engine\Render', 'get' . ucfirst($method)))
             return '$tpl->get' . ucfirst($method) . '()';
 
         throw new UnexpectedTokenException($tokens->back());
