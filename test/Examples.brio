@@ -2,6 +2,7 @@
 {* Operators *}
 
 	{* Arithmetic operators *}
+
 	{-$a}
 	{$a + $b}
 	{$a - $b}
@@ -12,6 +13,7 @@
 	{$a + $b * $c/$d - $e*5 + 1e3}
 
 	{* Logical operators *}
+
 	{$a || $b}
 	{$a && $b}
 	{!$a}
@@ -21,6 +23,7 @@
 	{if $b && $c} ... {/if}
 
 	{* Comparison operators *}
+
 	{$a < $b }
 	{$a > $b }
 	{$a <= $b }
@@ -38,6 +41,7 @@
 	{if 100 == "1e2"} {* 100 == 100 -> true *} {/if}
 
 	{* Assignment operator *}
+
 	{$a = $b }
 	{$a += $b }
 	{$a -= $b }
@@ -52,6 +56,7 @@
 	{set $b |= $flags}
 
 	{* Increment / Decrement Operators *}
+
 	{++$a}
 	{$a++}
 	{--$a}
@@ -62,6 +67,7 @@
 {* Syntax *}
 
 	{* Variables *}
+
 	{$foo.bar.baz}
 	{$foo.$bar.$baz}
 	{$foo[5].baz}
@@ -83,6 +89,7 @@
 	{$foo->bar(5)->buz(5.5)}
 
 	{* System variables *}
+
 	{$.env}       $_ENV.
 	{$.get}       $_GET.
 	{$.post}      $_POST.
@@ -101,7 +108,7 @@
 	{set $ferch = $.fetch($name, $values)}  Fetching template [ Brio::fetch() ]
 
 
-{* Template tags *}
+	{* Template tags *}
 
 	{set $v = "string"}
 	{set $v = 5}
@@ -140,12 +147,6 @@
 
 	{block "block{$number}"}content {$number}{/block}
 
-	{if $condition}
-		{block "bk-if"}content, then 'if' is true{/block}
-	{else}
-		{block "bk{$fail}"}content, then 'if' is false{/block}
-	{/if}
-
 	{use 'blockName'}
 
 	{block 'blockName'}
@@ -158,35 +159,11 @@
 
 	{block 'title'}{parent} - {$title}{/block}  {* Children template *}
 
-	{filter|strip_tags|truncate:20}
-		Remove all HTML <b>tags</b> and truncate {$text} to 20 symbols
-	{/filter}
-
-	{foreach $list as $key => $value index=$index first=$first last=$last}
-		{* code *}
-		{break}
-		{* code *}
-		{continue}
-		{* code *}
-	{foreachelse}
-		{* code *}
-	{/foreach}
-
-	{if <expression>}
-		{* ...code... *}
-	{elseif <expression>}
-		{* ...code... *}
-	{else}
-		{* ...code... *}
-	{/if}
-
 	{ignore}
 		var data = {"time": obj.ts};
 	{/ignore}
 
 	{script:ignore} ... {/script}
-
-	{foreach:ignore ...} ... {/foreach}
 
 	{include "pages/partial/latest" page=$item limit=50}
 
@@ -198,9 +175,9 @@
 		x + y + z = {$x + $y + $z}
 	{/macro}
 
-	{import 'math.tpl'}
+	{import 'templatename'}
 
-	{import [plus, minus, exp] from 'math.tpl' as math}
+	{import [plus, minus, exp] from 'templatename' as math}
 
 	{autoescape true}
 		...
@@ -219,53 +196,92 @@
 		...
 	{/autoescape}
 
-	{switch $foo}
-		{case 'value1'}
-			{* code *}
-		{case 'value2', 'value3'}
-			{* code *}
-		{case default}
-			{* code *}
-	{/switch}
-
 	{unset $a $b $c.d.e} {* Multiple unset *}
 
-{* Template modifiers *}
+	{filter|strip_tags|truncate:20}
+		Remove all HTML <b>tags</b> and truncate {$text} to 20 symbols
+	{/filter}
 
-	{$ts|date_format:"%Y/%m/%d %H:%M:%s"}
+	{foreach $list as $key => $value index=$index first=$first last=$last}
+		...
+		{break}
+		...
+		{continue}
+		...
+	{foreachelse}
+		...
+	{/foreach}
 
-	{$string|ematch:$pattern}
+	{foreach 1..4 as $value}
+		{$value}
+	{/foreach}
 
-	{$string|ereplace:'/(\w+) (\d+), (\d+)/i':'${1}1, $3'}
+	{foreach:ignore ...}
+		...
+	{/foreach}
+
+	{if <expression>}
+		...
+	{elseif <expression>}
+		...
+	{else}
+		...
+	{/if}
+
+	{switch $foo}
+		{case 'value1'}
+			...
+		{case 'value2', 'value3'}
+			...
+		{case default}
+			...
+	{/switch}
+
+
+	{* Template modifiers *}
+
+	{$string|upper}
+
+	{$string|lower}
+
+	{$string|capfirst}
+
+	{$string|title}
+
+	{$timestamp|date_format:"%Y/%m/%d %H:%M:%s"}
+
+	{$timestamp|date}
+
+	{* truncate($string, $length = 80, $etc = '...', $bywords = false, $middle = false) *}
+	{$longstring|truncate:$length:$etc:$bywords:$middle}
 
 	{$post.title|escape:'html'}
 
+	{"   one    two   "|strip} {* Returns 'one two' *}
+
+	{$string|ereplace:'/(\w+) (\d+), (\d+)/i':'${1}1, $3'}
+
+	{$fruits|replace:"pear":"orange"}
+
+	{$string|ematch:$pattern}
+
 	{$string|esplit:$pattern = '/,\s*/'}
+
+	{$string|split:$delimiter = ","}
+
+	{$string|join:$delimiter = ","}
 
 	{if $number|in:[1, 3, 42]}
 		...
 	{/if}
 
-	{$string|join:$delimiter = ","}
-
 	{if $images|length > 5}
 		...
 	{/if}
 
-	{$name|upper}
-
 	{if $color|match:"*gr[ae]y"}
 		...
 	{/if}
-
-	{$fruits|replace:"pear":"orange"}
-
-	{$string|split:$delimiter = ","}
-
-	{"   one    two   "|strip} {* Returns 'one two' *}
-
-	{* truncate($string, $length = 80, $etc = '...', $bywords = false, $middle = false) *}
-	{$longstring|truncate:$length:$etc:$bywords:$middle}
 
 
 {* Real World Examples *}
@@ -275,15 +291,14 @@
 	{filter|strip:true}
 	<html>
 	    <head>
-			<meta charset="utf-8">
-	        <title>{ucwords($strTitle)}</title>
+		<meta charset="{$__charset__}">
+	        <title>{ucwords($storeTitle)}</title>
 	        <link rel="stylesheet" href="css/style.css">
 	    </head>
 	    <body>
 	        <div id="layout">
 	            {include "parts/header"}
 	            {include "parts/tizers"}
-	            <hr/>
 	            <main>
 	                <table>
 	                    <tr>

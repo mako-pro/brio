@@ -99,10 +99,10 @@ class Brio implements RendererInterface
      * @var array
      */
     protected $modifiers = [
-        "upper"       => 'strtoupper',
-        "lower"       => 'strtolower',
-        "capfirst"    => 'strtolower',
-        "title"       => 'strtolower',
+        "upper"       => 'placer\brio\engine\Modifier::upper',
+        "lower"       => 'placer\brio\engine\Modifier::lower',
+        "capfirst"    => 'placer\brio\engine\Modifier::capfirst',
+        "title"       => 'placer\brio\engine\Modifier::title',
         "date_format" => 'placer\brio\engine\Modifier::dateFormat',
         "date"        => 'placer\brio\engine\Modifier::date',
         "truncate"    => 'placer\brio\engine\Modifier::truncate',

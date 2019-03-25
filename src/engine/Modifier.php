@@ -10,6 +10,54 @@ use placer\brio\Brio;
 
 class Modifier
 {
+    /**
+     * Returns string in the upper case
+     *
+     * @param string $str
+     * @return string
+     */
+    public static function upper(string $str)
+    {
+        return mb_strtoupper($str, Brio::$charset);
+    }
+
+    /**
+     * Returns string in the lower case
+     *
+     * @param string $str
+     * @return string
+     */
+    public static function lower(string $str)
+    {
+        return mb_strtolower($str, Brio::$charset);
+    }
+
+    /**
+     * Returns string with first char in the upper case
+     *
+     * @param string $str
+     * @return string
+     */
+    public static function capfirst(string $str)
+    {
+        $charset = Brio::$charset;
+
+        $first = mb_strtoupper(mb_substr($str, 0, 1, $charset), $charset);
+        $next  = mb_strtolower(mb_substr($str, 1, mb_strlen($str), $charset), $charset);
+
+        return $first . $next;
+    }
+
+    /**
+     * Returns string in the title format
+     *
+     * @param string $str
+     * @return string
+     */
+    public static function title(string $str)
+    {
+        return mb_convert_case($str, MB_CASE_TITLE, Brio::$charset);
+    }
 
     /**
      * Date format
