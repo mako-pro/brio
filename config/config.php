@@ -2,7 +2,7 @@
 
 return [
 
-	'extension'    => '.tpl',
+	'extension'    => '.brio',
 	'templates'    => MAKO_APPLICATION_PATH . '/resources/views',
 	'compilations' => MAKO_APPLICATION_PATH . '/storage/cache/brio',
 

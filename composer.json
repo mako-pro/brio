@@ -7,7 +7,6 @@
 	"autoload": {
 		"psr-4": {
 			"placer\\brio\\": "src",
-			"placer\\brio\\tests\\": "tests"
 		}
 	}
 }
