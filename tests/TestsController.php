@@ -48,7 +48,7 @@ class TestsController extends Controller
 		$stubs = [];
 		foreach ($templateFiles as $file)
 		{
-			$fileName = str_replace('.html.twig', '', $file);
+			$fileName = str_replace('.html.brio', '', $file);
 
 			if (strpos($fileName, '_') === 0)
 				continue;

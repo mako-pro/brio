@@ -6,7 +6,7 @@
     <div class="wrapper">
         <h2>{{ title }}</h2>
         {% set partial = "brio::stubs." . stub %}
-        <p><b>Template path:</b> packages/brio/resources/views/stubs/{{ stub }}.html.twig</p>
+        <p><b>Template path:</b> packages/brio/resources/views/stubs/{{ stub }}.html.brio</p>
         {% include partial %}
     </div>
 {% endblock %}

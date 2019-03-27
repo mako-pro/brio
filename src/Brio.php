@@ -12,7 +12,7 @@ class Brio
      *
      * @var string
      */
-    const EXT = '.html.twig';
+    const EXT = '.html.brio';
 
     /**
      * Path to the views diretory
