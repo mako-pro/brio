@@ -23,7 +23,7 @@ class BrioPackage extends Package
     /**
      * {@inheritdoc}
      */
-    protected function bootstrap()
+    protected function bootstrap(): void
     {
         $this->container->get('view')->extend('.html.brio', function ()
         {
