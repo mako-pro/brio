@@ -403,6 +403,11 @@ class Brio implements RendererInterface
     {
         unset($variables['__viewfactory__']);
 
+        if ($variables['fetch'] ?? false)
+        {
+            return (string) $this->fetch($view, $variables);
+        }
+
         return (string) $this->display($view, $variables);
     }
 
