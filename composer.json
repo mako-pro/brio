@@ -1,9 +1,9 @@
 {
-	"name": "packages/brio",
+	"name": "makopro/brio",
 	"description": "Brio - Templating Engine for Mako Framework",
 	"require": {
-		"php": ">=7.2.0",
-		"mako/framework": "6.0.*"
+		"php": ">=8.0",
+		"mako/framework": "9.1.*"
 	},
 	"autoload": {
 		"psr-4": {

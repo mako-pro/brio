@@ -1,26 +1,24 @@
-# Brio Package
-Brio is the simple, yet powerful templating engine for [Mako Framework](https://github.com/mako-framework).
+# Brio
 
-## Installing Brio
-1. Unzip package into a packages directory within your application's root directory.  
-2. Add dependency in `composer.json` file:
-```json
-"require": {
-	"php": ">=7.0.0",
-	"mako/framework": "5.7.*",
-	"packages/brio": "*"
-}
-```
-And add local repository path:
-```json
-"repositories": [
-    {
-        "type": "path",
-        "url": "packages/brio",
-        "options": {
-            "symlink": true
+Brio templating engine for Mako Framework.
+
+## Requirements
+
+Mako 9.1 or greater.
+
+## Installation
+
+Configure composer.json:
+
+	"require": {
+		...
+		"makopro/brio": "*"
+	,
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/mako-pro/brio"
         }
-    }
-]
-```
-3. Rur `composer install` or `composer update` command in console terminal.
+    ],
+    "minimum-stability": "dev",
+	"prefer-stable": true
